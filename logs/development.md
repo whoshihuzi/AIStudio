@@ -325,3 +325,88 @@ Milestone 4: ProcessAgentRuntime + Hermes CLI Integration (MVP)
 
 ### Next Milestone
 Milestone 5: Streaming + Markdown Rendering
+
+---
+
+## 2026-06-27 — Milestone 5: Conversation Rendering Engine
+
+### Objectives
+- Build a Runtime-agnostic Conversation Rendering Engine
+- Define the complete MessagePart model (text/code/tool/thinking/image/file)
+- Implement per-part-type renderers, never per-Runtime
+- Support streaming text accumulation + Markdown re-rendering
+
+### Completed Work
+- Updated `src/renderer/runtime/types.ts` — complete MessagePart model:
+  - TextPart, CodePart, ToolPart, ThinkingPart, ImagePart, FilePart
+  - Full AgentEvent protocol (8 event types)
+  - IAgentRuntime interface unchanged
+- Updated `src/main/runtime/types.ts` — synced AgentEvent types
+- Updated `src/main/runtime/process-agent-runtime.ts`:
+  - parseLine() returns AgentEvent[] (was AgentEvent | null)
+  - parseStderrLine() returns AgentEvent[] (was AgentEvent | null)
+  - stdout/stderr handlers iterate over event arrays
+- Updated `src/main/runtime/hermes-adapter.ts` — adapted to array returns
+- Installed `react-markdown`, `react-syntax-highlighter`, `remark-gfm`, `@types/react-syntax-highlighter`
+- Created `src/renderer/components/TextRenderer.tsx`:
+  - Wraps react-markdown with GitHub Flavored Markdown
+  - Custom components: inline code, fenced code delegation, links, tables, blockquotes
+  - Delegates fenced code blocks → CodeRenderer
+- Created `src/renderer/components/CodeRenderer.tsx`:
+  - Prism syntax highlighting (vscDarkPlus theme)
+  - Language label in header
+  - 📋 Copy button with "✓ Copied" feedback
+- Created `src/renderer/components/ToolRenderer.tsx`:
+  - Collapsible card, collapsed by default
+  - Three states: 🔄 running (animate-pulse), ✓ done (green), ✗ error (red)
+  - Expand: shows JSON input + output/error
+- Created `src/renderer/components/ThinkingRenderer.tsx`:
+  - Collapsible block, collapsed by default
+  - 💭 header, italic content
+- Created `src/renderer/components/ImageRenderer.tsx` — placeholder (📷)
+- Created `src/renderer/components/FileRenderer.tsx` — placeholder (📎)
+- Updated `src/renderer/components/MessageList.tsx`:
+  - PartRenderer switches on part.type → dispatches to 6 renderers
+  - Never references any Runtime name
+- Updated `src/renderer/stores/chat.ts`:
+  - Handles code/tool_call/tool_result/thinking/image/file events
+  - Thinking events accumulate (like text events)
+
+### Files Created/Modified
+| File | Action |
+|------|--------|
+| `src/renderer/runtime/types.ts` | Modified (+ImagePart, +FilePart, +AgentEvent types) |
+| `src/main/runtime/types.ts` | Modified (+AgentEvent types) |
+| `src/main/runtime/process-agent-runtime.ts` | Modified (parseLine → AgentEvent[]) |
+| `src/main/runtime/hermes-adapter.ts` | Modified (adapted to array) |
+| `src/renderer/stores/chat.ts` | Modified (+new event handlers) |
+| `src/renderer/components/MessageList.tsx` | Modified (+imports, new PartRenderer) |
+| `src/renderer/components/TextRenderer.tsx` | Created |
+| `src/renderer/components/CodeRenderer.tsx` | Created |
+| `src/renderer/components/ToolRenderer.tsx` | Created |
+| `src/renderer/components/ThinkingRenderer.tsx` | Created |
+| `src/renderer/components/ImageRenderer.tsx` | Created |
+| `src/renderer/components/FileRenderer.tsx` | Created |
+
+### Installed Dependencies
+| Package | Type |
+|---------|------|
+| react-markdown | dependency |
+| react-syntax-highlighter | dependency |
+| remark-gfm | dependency |
+| @types/react-syntax-highlighter | devDependency |
+
+### Verification Results
+- `npm run typecheck` — zero errors
+- `npm run build` — 1109 modules, 1.9MB JS bundle
+- `npm start` — Electron launches, no errors
+- `npm run dev` — HMR works, chat UI functional
+
+### Architecture Notes
+- Session files now support all 6 part types natively (no migration needed)
+- ImagePart/FilePart render as placeholders — fully functional when Runtime emits them
+- parseLine returning AgentEvent[] enables future adapters (Claude, GPT) to emit multiple events per line
+- PartRenderer dispatches by part.type only — adding new renderers is a one-line change
+
+### Next Milestone
+Milestone 6: Quality Gates (ESLint + Prettier enforcement)
