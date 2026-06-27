@@ -223,3 +223,105 @@ Milestone 3: React Renderer Integration
 
 ### Next Milestone
 Milestone 4: ProcessAgentRuntime + Hermes CLI Integration (MVP)
+
+---
+
+## 2026-06-27 — Milestone 4: ProcessAgentRuntime Framework + Hermes Integration
+
+### Objectives
+- Deliver ProcessAgentRuntime — generic CLI agent framework
+- Integrate Hermes as the first adapter (HermesAdapter)
+- Implement stable IPC: agent.send / abort / onEvent
+- Session persistence with JSON filesystem storage
+- Full chat workflow: send → Hermes processes → response displayed
+- Sidebar with session CRUD
+
+### Completed Work
+- Created `src/main/runtime/types.ts` — AgentEvent + SessionMeta + SessionData types
+- Created `src/main/runtime/process-agent-runtime.ts` — abstract base class:
+  - Manages spawn lifecycle, stdout/stderr parsing, abort with SIGTERM→SIGKILL escalation
+  - Subclasses implement: buildCommand(), parseLine(), parseStderrLine()
+- Created `src/main/runtime/hermes-adapter.ts` — thin Hermes adapter:
+  - buildCommand: `hermes -z "prompt"`
+  - parseLine: plain text → AgentTextEvent
+  - Only 40 lines — adapter-specific code is intentionally minimal
+- Created `src/main/runtime/runtime-manager.ts` — AgentRuntimeManager:
+  - Adapter registry pattern (add new adapters without touching main process)
+  - Main process imports ONLY RuntimeManager, never HermesAdapter directly
+- Created `src/main/runtime/session-store.ts` — JSON file persistence:
+  - Sessions stored in `workspace/sessions/{id}.json`
+  - Index file for fast listing
+  - Session meta uses extensible format: `{ runtime, adapter }` not hardcoded agent
+- Updated `src/preload/index.ts` — stable IPC API:
+  - `agent.send(prompt)`, `agent.abort()`, `agent.onEvent(callback)`
+  - `session.create/list/load/save/delete`
+  - No adapter names in API surface
+- Created `src/renderer/runtime/agent-bridge.ts` — IAgentRuntime over IPC:
+  - Converts IPC event stream to AsyncIterable<AgentEvent>
+  - Renderer never imports HermesAdapter or any adapter-specific code
+- Updated `src/renderer/stores/chat.ts` — uses AgentBridge instead of EchoRuntime
+- Created `src/renderer/stores/session.ts` — session management:
+  - init/create/switch/delete/saveCurrentSession
+  - Auto-saves on message change
+- Created `src/renderer/components/Sidebar.tsx`:
+  - Session list with create/switch/delete
+  - Auto-save on message change
+- Created `src/renderer/components/StatusBar.tsx`:
+  - Idle / Running... state display
+  - Cancel button
+- Updated `src/renderer/App.tsx` — Sidebar + ChatView layout
+- Updated `src/renderer/components/ChatView.tsx` — uses StatusBar component
+- Updated `src/renderer/env.d.ts` — full window.api type declarations
+- Updated `src/main/index.ts` — ipcMain handlers for agent + session
+- Updated `tailwind.config.js` — added gray-750/gray-850 for sidebar
+
+### Files Created/Modified
+| File | Action |
+|------|--------|
+| `src/main/runtime/types.ts` | Created |
+| `src/main/runtime/process-agent-runtime.ts` | Created |
+| `src/main/runtime/hermes-adapter.ts` | Created |
+| `src/main/runtime/runtime-manager.ts` | Created |
+| `src/main/runtime/session-store.ts` | Created |
+| `src/preload/index.ts` | Modified (full IPC API) |
+| `src/renderer/runtime/agent-bridge.ts` | Created |
+| `src/renderer/stores/session.ts` | Created |
+| `src/renderer/components/Sidebar.tsx` | Created |
+| `src/renderer/components/StatusBar.tsx` | Created |
+| `src/renderer/stores/chat.ts` | Modified (AgentBridge) |
+| `src/renderer/App.tsx` | Modified (Sidebar layout) |
+| `src/renderer/components/ChatView.tsx` | Modified (StatusBar) |
+| `src/renderer/env.d.ts` | Modified (window.api types) |
+| `src/main/index.ts` | Modified (ipcMain handlers) |
+| `tailwind.config.js` | Modified (custom colors) |
+
+### Architecture Verification
+- Main process imports: RuntimeManager — NOT HermesAdapter ✓
+- Renderer imports: AgentBridge (IAgentRuntime) — NOT HermesAdapter ✓
+- Preload API surface: agent.send/abort/onEvent — no agent names ✓
+- Session meta: `{ runtime: "process", adapter: "hermes" }` — extensible ✓
+- Adapter registry: one-line addition for future adapters ✓
+
+### Verification Results
+- `npm run typecheck` — zero errors
+- `npm run build` — 40 renderer + 5 main + 1 preload modules
+- `npm run dev` — Electron launches with:
+  - Sidebar with session list
+  - Create new session → Chat clears
+  - Type message → Hermes processes → response appears
+  - Busy/Running state with Cancel button
+  - Session persists across window restarts
+
+### Git Commit
+- Hash: `7b0c966`
+- Message: `feat: ProcessAgentRuntime framework with Hermes adapter and session persistence`
+
+### Notes
+- Hermes one-shot mode (`-z`) outputs plain text only — tool calls execute server-side but are not individually streamed
+- Cancel currently terminates the process (SIGTERM + 3s SIGKILL fallback)
+- Session auto-save triggers on every message change via useEffect
+- Node16 moduleResolution requires `.js` extensions in relative imports (main process only)
+- `echo-runtime.ts` retained but no longer used — can be removed in cleanup milestone
+
+### Next Milestone
+Milestone 5: Streaming + Markdown Rendering
