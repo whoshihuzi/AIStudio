@@ -37,6 +37,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       const data = await window.api.session.load(sessions[0]!.id);
       if (data) {
         const { useChatStore } = await import("@/stores/chat");
+        useChatStore.getState().setSessionId(sessions[0]!.id);
         useChatStore.getState().loadMessages(
           data.messages.map((m) => ({
             id: m.id,
@@ -108,6 +109,10 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   deleteSession: async (id: string) => {
     await window.api.session.delete(id);
+
+    const { useChatStore } = await import("@/stores/chat");
+    const wasCurrent = get().activeSessionId === id;
+
     set((s) => {
       const sessions = s.sessions.filter((x) => x.id !== id);
       const activeSessionId =
@@ -117,9 +122,28 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       return { sessions, activeSessionId };
     });
 
-    if (get().activeSessionId) {
-      const { useChatStore } = await import("@/stores/chat");
-      useChatStore.getState().loadMessages([]);
+    if (wasCurrent) {
+      const newActiveId = get().activeSessionId;
+      if (newActiveId) {
+        // Switch to next session
+        const data = await window.api.session.load(newActiveId);
+        if (data) {
+          useChatStore.getState().setSessionId(newActiveId);
+          useChatStore.getState().loadMessages(
+            data.messages.map((m) => ({
+              id: m.id,
+              sessionId: data.meta.id,
+              role: m.role,
+              parts: m.parts.map((p) => ({ ...p } as Message["parts"][number])),
+              timestamp: m.timestamp,
+            })),
+          );
+        }
+      } else {
+        // No sessions left — reset to default
+        useChatStore.getState().setSessionId("default");
+        useChatStore.getState().loadMessages([]);
+      }
     }
   },
 }));

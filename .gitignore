@@ -41,6 +41,10 @@ npm-debug.log*
 # Testing
 coverage/
 
+# Hermes Agent
+.hermes/*
+!.hermes/plans/
+
 # Package locks (optional — keep one of these)
 # yarn.lock
 # pnpm-lock.yaml

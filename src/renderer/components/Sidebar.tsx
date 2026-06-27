@@ -1,5 +1,4 @@
 import { useSessionStore } from "@/stores/session";
-import { useChatStore } from "@/stores/chat";
 import { useEffect } from "react";
 
 export function Sidebar() {
@@ -10,20 +9,10 @@ export function Sidebar() {
   const createSession = useSessionStore((s) => s.createSession);
   const switchSession = useSessionStore((s) => s.switchSession);
   const deleteSession = useSessionStore((s) => s.deleteSession);
-  const saveCurrent = useSessionStore((s) => s.saveCurrentSession);
-  const chatMessages = useChatStore((s) => s.messages);
-  const chatSessionId = useChatStore((s) => s.sessionId);
 
   useEffect(() => {
     init();
   }, []);
-
-  // Auto-save on message change
-  useEffect(() => {
-    if (chatSessionId !== "default" && chatMessages.length > 0) {
-      saveCurrent(chatMessages);
-    }
-  }, [chatMessages]);
 
   return (
     <div className="w-56 bg-gray-850 border-r border-gray-700 flex flex-col h-full">

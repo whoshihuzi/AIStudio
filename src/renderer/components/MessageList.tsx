@@ -14,9 +14,9 @@ interface MessageListProps {
 export function MessageList({ messages }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to the latest message
+  // Auto-scroll to the latest message (instant to avoid jitter during streaming)
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    bottomRef.current?.scrollIntoView({ behavior: "auto" });
   }, [messages]);
 
   if (messages.length === 0) {

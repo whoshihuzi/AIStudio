@@ -68,5 +68,19 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.invoke("session:save", data),
     delete: (id: string): Promise<void> =>
       ipcRenderer.invoke("session:delete", id),
+
+    /** Main process signals "about to quit — flush now". */
+    onFlushRequest: (callback: () => void): (() => void) => {
+      const handler = (): void => callback();
+      ipcRenderer.on("session:flush-request", handler);
+      return () => {
+        ipcRenderer.removeListener("session:flush-request", handler);
+      };
+    },
+
+    /** Renderer signals "flush done — you can close now". */
+    flushComplete: (): void => {
+      ipcRenderer.send("session:flush-complete");
+    },
   },
 });

@@ -29,6 +29,8 @@ export interface ChatState {
   messages: Message[];
   isLoading: boolean;
   sessionId: string;
+  /** Reference to the currently active AgentBridge, so Cancel can reach it. */
+  runtimeRef: AgentBridge | null;
 
   setSessionId: (id: string) => void;
   loadMessages: (msgs: Message[]) => void;
@@ -44,6 +46,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   isLoading: false,
   sessionId: "default",
+  runtimeRef: null,
 
   setSessionId: (id: string) => set({ sessionId: id, messages: [] }),
 
@@ -55,6 +58,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     // Create runtime linked to this session (passes sessionId for --resume)
     const runtime = new AgentBridge(sessionId !== "default" ? sessionId : undefined);
+
+    // Store reference so cancelRequest() can reach it
+    set({ runtimeRef: runtime });
 
     // Add user message
     const userMsg = makeMessage("user", sessionId, [{ type: "text", content }]);
@@ -215,14 +221,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({ messages: updated });
       }
     } finally {
-      set({ isLoading: false });
+      set({ isLoading: false, runtimeRef: null });
       runtime.destroy();
     }
   },
 
   cancelRequest: () => {
-    // We need to reach the runtime to abort
-    // For now, simple state change
-    set({ isLoading: false });
+    const { runtimeRef } = get();
+    if (runtimeRef) {
+      runtimeRef.abort();
+    }
+    set({ isLoading: false, runtimeRef: null });
   },
 }));

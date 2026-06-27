@@ -87,6 +87,10 @@ interface Window {
         }>;
       }) => Promise<void>;
       delete: (id: string) => Promise<void>;
+      /** Main → Renderer: "about to quit, flush now" */
+      onFlushRequest: (callback: () => void) => () => void;
+      /** Renderer → Main: "flush done, you can close" */
+      flushComplete: () => void;
     };
   };
 }
