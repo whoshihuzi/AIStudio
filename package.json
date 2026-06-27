@@ -2,12 +2,17 @@
   "name": "ai-studio",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "description": "AI-Native Development Environment for Human & AI Collaboration",
   "main": "dist/main/index.js",
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc -b --noEmit",
     "compile": "tsc -b",
     "start": "electron ."
   },
@@ -15,7 +20,20 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^26.0.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.2.0",
+    "autoprefixer": "^10.5.2",
     "electron": "^42.5.0",
-    "typescript": "^6.0.3"
+    "electron-vite": "^5.0.0",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^6.0.3",
+    "vite": "^7.3.6"
+  },
+  "dependencies": {
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "zustand": "^5.0.14"
   }
 }

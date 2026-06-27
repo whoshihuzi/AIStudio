@@ -14,6 +14,11 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "paths": {
+      "@/*": ["./src/renderer/*"]
+    },
     "sourceMap": true
   },
   "include": ["src/renderer/**/*"]
