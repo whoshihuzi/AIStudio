@@ -115,3 +115,11 @@ The documentation is the source of truth.
 The implementation follows the documentation.
 
 Never reverse this relationship.
+
+---
+
+# Rule 13
+
+Infrastructure problems must be solved as infrastructure problems.
+
+Never compensate for environment failures by modifying application code.
