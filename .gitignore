@@ -5,6 +5,7 @@ node_modules/
 dist/
 out/
 build/
+workspace/sessions/
 
 # Electron artifacts
 *.exe
