@@ -114,3 +114,112 @@ Milestone 2: Electron Bare Application
 
 ### Next Milestone
 Milestone 3: React Renderer Integration
+
+---
+
+## 2026-06-27 — Milestone 3: Dev Toolchain + Chat Shell + Runtime Architecture
+
+### Objectives
+- Introduce Vite + React + Tailwind as a single integrated step
+- Design the Agent Runtime abstraction layer
+- Build an interactive chat shell (no backend yet)
+
+### Completed Work
+- Installed react@19, react-dom@19, zustand@5, vite@7, electron-vite@5, tailwindcss@3
+- Created `electron.vite.config.ts` — three-entry build (main/preload/renderer) with React plugin
+- Created `tailwind.config.js` and `postcss.config.js`
+- Re-activated `tsconfig.web.json` with bundler module resolution and @/ path alias
+- Created `src/renderer/runtime/types.ts` — core architecture:
+  - `MessagePart` discriminated union: text, code, tool, thinking
+  - `Message` with role, sessionId, parts[], timestamp
+  - `Session` with id, title, messages[], timestamps
+  - `Workspace` with sessions[], activeSessionId
+  - `AgentEvent` discriminated union: text, tool_call, tool_result, done, error
+  - `IAgentRuntime` interface with `sendMessage()` and `abort()`
+- Created `src/renderer/runtime/echo-runtime.ts` — stub IAgentRuntime implementation
+- Created `src/renderer/stores/chat.ts` — Zustand store:
+  - Manages message list, loading state, agent events
+  - Dispatches messages to runtime, processes streaming events
+  - Builds MessageParts from AgentEvent stream
+- Created `src/renderer/components/ChatInput.tsx`:
+  - Textarea with auto-resize
+  - Enter to send, Shift+Enter for newline
+  - Disabled state during loading
+- Created `src/renderer/components/MessageList.tsx`:
+  - Renders messages with role-based styling
+  - PartRenderer handles text/tool parts
+  - Auto-scroll to latest message
+- Created `src/renderer/components/ChatView.tsx`:
+  - Header with status bar (Idle / Running...)
+  - Cancel button placeholder
+  - Composes MessageList + ChatInput
+- Created `src/renderer/styles/global.css` — Tailwind v3 directives + dark theme
+- Created `src/renderer/App.tsx` and `src/renderer/main.tsx` — React entry
+- Updated `src/renderer/index.html` — React mount point with module script
+- Updated `src/main/index.ts` — electron-vite dev server URL loading
+- Added `package.json` scripts: dev, build, preview, typecheck
+- Added `"type": "module"` to package.json
+
+### Files Created/Modified
+| File | Action |
+|------|--------|
+| `electron.vite.config.ts` | Created |
+| `postcss.config.js` | Created |
+| `tailwind.config.js` | Created |
+| `tsconfig.web.json` | Modified (+allowImportingTsExtensions, +paths, +noEmit) |
+| `tsconfig.json` | Modified (+web reference) |
+| `package.json` | Modified (scripts, type:module) |
+| `src/renderer/runtime/types.ts` | Created |
+| `src/renderer/runtime/echo-runtime.ts` | Created |
+| `src/renderer/stores/chat.ts` | Created |
+| `src/renderer/components/ChatView.tsx` | Created |
+| `src/renderer/components/MessageList.tsx` | Created |
+| `src/renderer/components/ChatInput.tsx` | Created |
+| `src/renderer/styles/global.css` | Created |
+| `src/renderer/App.tsx` | Created |
+| `src/renderer/main.tsx` | Created |
+| `src/renderer/env.d.ts` | Created |
+| `src/renderer/index.html` | Modified (React shell) |
+| `src/main/index.ts` | Modified (electron-vite dev URL) |
+
+### Installed Dependencies
+| Package | Version | Type |
+|---------|---------|------|
+| react | 19.2.7 | dependency |
+| react-dom | 19.2.7 | dependency |
+| zustand | 5.0.14 | dependency |
+| electron-vite | 5.0.0 | devDependency |
+| vite | 7.3.6 | devDependency |
+| @vitejs/plugin-react | 5.2.0 | devDependency |
+| tailwindcss | 3.x | devDependency |
+| postcss | 8.5.15 | devDependency |
+| autoprefixer | 10.5.2 | devDependency |
+| @types/react | 19.2.17 | devDependency |
+| @types/react-dom | 19.2.3 | devDependency |
+
+### Verification Results
+- `npm run typecheck` — zero errors
+- `npm run build` — 36 modules → out/main, out/preload, out/renderer
+- `npm run dev` — Electron window launches with:
+  - Dark-themed chat interface
+  - ChatInput with auto-resize textarea
+  - Enter sends message, Shift+Enter newline
+  - EchoRuntime returns "Echo: <message>"
+  - Messages appear in styled bubbles (user blue, assistant gray)
+  - Loading state shows "Running..." with cancel button
+  - HMR works: modifying source files triggers instant reload
+
+### Git Commit
+- Hash: `b02e33e`
+- Message: `feat: React chat shell with Electron, Vite, Tailwind, and Agent Runtime architecture`
+
+### Notes
+- Tailwind v4 was initially installed by npm but downgraded to v3 for stability and simpler PostCSS integration
+- Version conflict resolved: electron-vite@5 requires vite@^7, @vitejs/plugin-react@5 is compatible
+- `IAgentRuntime` interface is the architectural boundary — UI never imports concrete implementations
+- MessagePart model is forward-compatible: code/tool/thinking/image/file parts defined but not yet rendered
+- EchoRuntime will be replaced by ProcessAgentRuntime in M4
+- All filesystem access will go through preload bridge in M4 (Renderer currently has no filesystem access)
+
+### Next Milestone
+Milestone 4: ProcessAgentRuntime + Hermes CLI Integration (MVP)
