@@ -1,3 +1,4 @@
+import stripAnsi from "strip-ansi";
 import { ProcessAgentRuntime, type ParseResult } from "./process-agent-runtime.js";
 import type { AgentEvent } from "./types.js";
 
@@ -8,7 +9,7 @@ import type { AgentEvent } from "./types.js";
  *
  * Responsibilities:
  *   - buildCommand: include --resume when sessionId is in runtimeState
- *   - parseLine: filter chrome, extract text/tool events, capture sessionId
+ *   - parseLine: strip ANSI → filter chrome → extract text/tool events
  */
 export class HermesAdapter extends ProcessAgentRuntime {
   readonly adapterName = "hermes";
@@ -18,22 +19,17 @@ export class HermesAdapter extends ProcessAgentRuntime {
     args: string[];
   } {
     const args = ["chat", "--cli", "-q", prompt];
-
-    if (state.sessionId) {
-      args.push("--resume", state.sessionId as string);
-    }
-
+    if (state.sessionId) args.push("--resume", state.sessionId as string);
     return { cmd: "hermes", args };
   }
 
   protected parseLine(line: string, state: Record<string, unknown>): ParseResult {
-    const raw = line.trimEnd();
-    const trimmed = raw.trim();
-
-    // ── empty ──
+    // ── 0. Strip ANSI escape codes ──
+    const clean = stripAnsi(line).trimEnd();
+    const trimmed = clean.trim();
     if (!trimmed) return { events: [] };
 
-    // ── sessionId capture (from "hermes --resume <id>" line) ──
+    // ── 1. Session ID capture ──
     const sessionMatch = trimmed.match(/hermes --resume (\S+)/);
     if (sessionMatch && sessionMatch[1]) {
       return {
@@ -42,15 +38,15 @@ export class HermesAdapter extends ProcessAgentRuntime {
       };
     }
 
-    // ── Chrome lines (skip) ──
+    // ── 2. Chrome (always skip) ──
     if (isChrome(trimmed)) return { events: [] };
 
-    // ── Response block boundaries (skip) ──
+    // ── 3. Response block borders (skip, not content) ──
     if (trimmed.startsWith("╭─") || trimmed.startsWith("╰─")) {
       return { events: [] };
     }
 
-    // ── Tool call: "preparing <toolName>…" ──
+    // ── 4. Tool call ──
     const prepMatch = trimmed.match(/preparing\s+(\S+)…/);
     if (prepMatch) {
       const toolName = prepMatch[1]!;
@@ -60,7 +56,7 @@ export class HermesAdapter extends ProcessAgentRuntime {
       };
     }
 
-    // ── Tool result: contains ┊ but not "preparing" ──
+    // ── 5. Tool result ──
     if (trimmed.includes("┊")) {
       const pending = (state.pendingTool as string) || "unknown";
       return {
@@ -69,19 +65,15 @@ export class HermesAdapter extends ProcessAgentRuntime {
       };
     }
 
-    // ── Content text ──
+    // ── 6. Content text ──
     return { events: [{ type: "text", content: trimmed }] };
   }
 
-  protected parseStderrLine(
-    line: string,
-    _state: Record<string, unknown>,
-  ): ParseResult {
-    const trimmed = line.trim();
-    if (!trimmed) return { events: [] };
-    // Only emit real errors, not TUI noise
-    if (trimmed.includes("Error") || trimmed.includes("Traceback")) {
-      return { events: [{ type: "error", error: trimmed }] };
+  protected parseStderrLine(line: string, _state: Record<string, unknown>): ParseResult {
+    const clean = stripAnsi(line).trim();
+    if (!clean) return { events: [] };
+    if (clean.includes("Error") || clean.includes("Traceback")) {
+      return { events: [{ type: "error", error: clean }] };
     }
     return { events: [] };
   }
@@ -94,7 +86,7 @@ function isChrome(line: string): boolean {
     line.startsWith("Query:") ||
     line.startsWith("Initializing") ||
     line.startsWith("↻ Resumed") ||
-    line.startsWith("────") ||
+    /^─{2,}/.test(line) ||           // ──── separator lines
     line.startsWith("Resume this") ||
     line.startsWith("Session:") ||
     line.startsWith("Duration:") ||
