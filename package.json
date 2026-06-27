@@ -1,0 +1,13 @@
+{
+  "name": "ai-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-Native Development Environment for Human & AI Collaboration",
+  "main": "dist/main/index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {},
+  "author": "",
+  "license": "MIT"
+}

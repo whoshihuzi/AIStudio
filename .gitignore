@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+out/
+build/
+
+# Electron artifacts
+*.exe
+*.dmg
+*.app
+*.AppImage
+*.snap
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing
+coverage/
+
+# Package locks (optional — keep one of these)
+# yarn.lock
+# pnpm-lock.yaml
