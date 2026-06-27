@@ -1,5 +1,11 @@
 import { useEffect, useRef } from "react";
 import type { Message } from "@/runtime/types";
+import { TextRenderer } from "./TextRenderer";
+import { CodeRenderer } from "./CodeRenderer";
+import { ToolRenderer } from "./ToolRenderer";
+import { ThinkingRenderer } from "./ThinkingRenderer";
+import { ImageRenderer } from "./ImageRenderer";
+import { FileRenderer } from "./FileRenderer";
 
 interface MessageListProps {
   messages: Message[];
@@ -57,16 +63,16 @@ function MessageBubble({ message }: { message: Message }) {
 function PartRenderer({ part }: { part: Message["parts"][number] }) {
   switch (part.type) {
     case "text":
-      return <p className="whitespace-pre-wrap">{part.content || "..."}</p>;
+      return <TextRenderer content={part.content} />;
+    case "code":
+      return <CodeRenderer language={part.language} content={part.content} />;
     case "tool":
-      return (
-        <div className="text-xs text-gray-400 italic mt-1 border-t border-gray-700 pt-1">
-          {part.status === "running"
-            ? `Running: ${part.toolName}...`
-            : `Tool: ${part.toolName}`}
-        </div>
-      );
-    default:
-      return null;
+      return <ToolRenderer part={part} />;
+    case "thinking":
+      return <ThinkingRenderer part={part} />;
+    case "image":
+      return <ImageRenderer part={part} />;
+    case "file":
+      return <FileRenderer part={part} />;
   }
 }

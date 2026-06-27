@@ -27,16 +27,15 @@ export abstract class ProcessAgentRuntime {
     env?: Record<string, string>;
   };
 
-  /** Parse one line of stdout into an AgentEvent, or null to skip */
-  protected parseLine(_line: string): AgentEvent | null {
-    return { type: "text", content: _line };
+  /** Parse one line of stdout into zero or more AgentEvents */
+  protected parseLine(_line: string): AgentEvent[] {
+    return [{ type: "text", content: _line }];
   }
 
   /** Parse one line of stderr (default: emit as error event) */
-  protected parseStderrLine(line: string): AgentEvent | null {
-    // Skip common noise
-    if (!line.trim()) return null;
-    return { type: "error", error: line };
+  protected parseStderrLine(line: string): AgentEvent[] {
+    if (!line.trim()) return [];
+    return [{ type: "error", error: line }];
   }
 
   // ---- Public API ----
@@ -62,14 +61,18 @@ export abstract class ProcessAgentRuntime {
 
     stdout.on("line", (line: string) => {
       if (this.aborted) return;
-      const event = this.parseLine(line);
-      if (event) onEvent(event);
+      const events = this.parseLine(line);
+      for (const event of events) {
+        onEvent(event);
+      }
     });
 
     stderr.on("line", (line: string) => {
       if (this.aborted) return;
-      const event = this.parseStderrLine(line);
-      if (event) onEvent(event);
+      const events = this.parseStderrLine(line);
+      for (const event of events) {
+        onEvent(event);
+      }
     });
 
     return new Promise<void>((resolve) => {

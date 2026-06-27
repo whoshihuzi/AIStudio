@@ -20,6 +20,7 @@
     "@types/node": "^26.0.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "@vitejs/plugin-react": "^5.2.0",
     "autoprefixer": "^10.5.2",
     "electron": "^42.5.0",
@@ -32,6 +33,9 @@
   "dependencies": {
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^16.1.1",
+    "remark-gfm": "^4.0.1",
     "zustand": "^5.0.14"
   }
 }

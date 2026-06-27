@@ -27,22 +27,18 @@ export class HermesAdapter extends ProcessAgentRuntime {
    * Hermes -z mode outputs plain text lines.
    * Every non-empty line is a text event.
    */
-  protected parseLine(line: string): AgentEvent | null {
+  protected parseLine(line: string): AgentEvent[] {
     const trimmed = line.trim();
-    if (!trimmed) return null;
-    return { type: "text", content: trimmed };
+    if (!trimmed) return [];
+    return [{ type: "text", content: trimmed }];
   }
 
-  /**
-   * Hermes may output diagnostic info to stderr.
-   * Only emit error events for actual errors (lines containing "Error" or "Traceback").
-   */
-  protected parseStderrLine(line: string): AgentEvent | null {
+  protected parseStderrLine(line: string): AgentEvent[] {
     const trimmed = line.trim();
-    if (!trimmed) return null;
+    if (!trimmed) return [];
     if (trimmed.includes("Error") || trimmed.includes("Traceback")) {
-      return { type: "error", error: trimmed };
+      return [{ type: "error", error: trimmed }];
     }
-    return null;
+    return [];
   }
 }

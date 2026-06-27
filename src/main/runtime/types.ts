@@ -3,8 +3,12 @@
 
 export type AgentEvent =
   | { type: "text"; content: string }
+  | { type: "code"; language: string; content: string }
   | { type: "tool_call"; toolName: string; input: unknown }
   | { type: "tool_result"; toolName: string; output: string }
+  | { type: "thinking"; content: string }
+  | { type: "image"; mimeType: string; data: string; alt?: string }
+  | { type: "file"; fileName: string; mimeType: string; data: string; size?: number }
   | { type: "done" }
   | { type: "error"; error: string };
 
@@ -30,6 +34,11 @@ export interface SessionData {
       input?: unknown;
       output?: string;
       status?: string;
+      mimeType?: string;
+      data?: string;
+      alt?: string;
+      fileName?: string;
+      size?: number;
     }>;
     timestamp: number;
   }>;

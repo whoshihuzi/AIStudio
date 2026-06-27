@@ -91,6 +91,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
             set({ messages: updated });
             break;
           }
+          case "code": {
+            const updated = [...current];
+            const msg = { ...updated[idx]! };
+            updated[idx] = {
+              ...msg,
+              parts: [
+                ...msg.parts,
+                { type: "code", language: event.language, content: event.content },
+              ],
+            };
+            set({ messages: updated });
+            break;
+          }
           case "tool_call": {
             const updated = [...current];
             const msg = { ...updated[idx]! };
@@ -127,6 +140,60 @@ export const useChatStore = create<ChatState>((set, get) => ({
             updated[idx] = {
               ...msg,
               parts: [...msg.parts, { type: "text", content: `Error: ${event.error}` }],
+            };
+            set({ messages: updated });
+            break;
+          }
+          case "thinking": {
+            const updated = [...current];
+            const msg = { ...updated[idx]! };
+            const parts = [...msg.parts];
+            const lastPart = parts[parts.length - 1];
+            if (lastPart && lastPart.type === "thinking") {
+              parts[parts.length - 1] = {
+                ...lastPart,
+                content: lastPart.content + event.content,
+              };
+            } else {
+              parts.push({ type: "thinking", content: event.content });
+            }
+            updated[idx] = { ...msg, parts };
+            set({ messages: updated });
+            break;
+          }
+          case "image": {
+            const updated = [...current];
+            const msg = { ...updated[idx]! };
+            updated[idx] = {
+              ...msg,
+              parts: [
+                ...msg.parts,
+                {
+                  type: "image",
+                  mimeType: event.mimeType,
+                  data: event.data,
+                  alt: event.alt,
+                },
+              ],
+            };
+            set({ messages: updated });
+            break;
+          }
+          case "file": {
+            const updated = [...current];
+            const msg = { ...updated[idx]! };
+            updated[idx] = {
+              ...msg,
+              parts: [
+                ...msg.parts,
+                {
+                  type: "file",
+                  fileName: event.fileName,
+                  mimeType: event.mimeType,
+                  data: event.data,
+                  size: event.size,
+                },
+              ],
             };
             set({ messages: updated });
             break;

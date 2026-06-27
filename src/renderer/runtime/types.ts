@@ -1,9 +1,9 @@
 // ============================================================
-// Message Content Model
+// Message Content Model — complete, no future upgrades needed
 // ============================================================
 
-/** A message is composed of one or more typed parts. */
-export type MessagePart = TextPart | CodePart | ToolPart | ThinkingPart;
+export type MessagePart = TextPart | CodePart | ToolPart
+  | ThinkingPart | ImagePart | FilePart;
 
 export interface TextPart {
   type: "text";
@@ -27,6 +27,23 @@ export interface ToolPart {
 export interface ThinkingPart {
   type: "thinking";
   content: string;
+}
+
+/** Reserved for future Runtime output. Rendering: placeholder. */
+export interface ImagePart {
+  type: "image";
+  mimeType: string;
+  data: string;
+  alt?: string;
+}
+
+/** Reserved for future Runtime output. Rendering: placeholder. */
+export interface FilePart {
+  type: "file";
+  fileName: string;
+  mimeType: string;
+  data: string;
+  size?: number;
 }
 
 // ============================================================
@@ -63,18 +80,28 @@ export interface Workspace {
 }
 
 // ============================================================
-// Agent Runtime Events
+// Agent Runtime Events — complete protocol
 // ============================================================
 
 export type AgentEvent =
   | AgentTextEvent
+  | AgentCodeEvent
   | AgentToolCallEvent
   | AgentToolResultEvent
+  | AgentThinkingEvent
+  | AgentImageEvent
+  | AgentFileEvent
   | AgentDoneEvent
   | AgentErrorEvent;
 
 export interface AgentTextEvent {
   type: "text";
+  content: string;
+}
+
+export interface AgentCodeEvent {
+  type: "code";
+  language: string;
   content: string;
 }
 
@@ -88,6 +115,26 @@ export interface AgentToolResultEvent {
   type: "tool_result";
   toolName: string;
   output: string;
+}
+
+export interface AgentThinkingEvent {
+  type: "thinking";
+  content: string;
+}
+
+export interface AgentImageEvent {
+  type: "image";
+  mimeType: string;
+  data: string;
+  alt?: string;
+}
+
+export interface AgentFileEvent {
+  type: "file";
+  fileName: string;
+  mimeType: string;
+  data: string;
+  size?: number;
 }
 
 export interface AgentDoneEvent {
@@ -104,8 +151,6 @@ export interface AgentErrorEvent {
 // ============================================================
 
 export interface IAgentRuntime {
-  /** Send a user message and receive a stream of agent events. */
   sendMessage(prompt: string): AsyncIterable<AgentEvent>;
-  /** Request cancellation of the current operation. */
   abort(): void;
 }
