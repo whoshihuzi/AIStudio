@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import type { Message, MessagePart, IAgentRuntime, AgentEvent } from "@/runtime/types";
-import { EchoRuntime } from "@/runtime/echo-runtime";
+import type { Message, MessagePart } from "@/runtime/types";
+import { AgentBridge } from "@/runtime/agent-bridge";
 
 // ============================================================
 // Helpers
@@ -11,6 +11,16 @@ function uid(): string {
   return `msg_${nextId++}_${Date.now()}`;
 }
 
+function makeMessage(role: Message["role"], sessionId: string, parts: MessagePart[]): Message {
+  return {
+    id: uid(),
+    sessionId,
+    role,
+    parts,
+    timestamp: Date.now(),
+  };
+}
+
 // ============================================================
 // State
 // ============================================================
@@ -18,43 +28,40 @@ function uid(): string {
 export interface ChatState {
   messages: Message[];
   isLoading: boolean;
-  runtime: IAgentRuntime;
+  sessionId: string;
 
+  setSessionId: (id: string) => void;
+  loadMessages: (msgs: Message[]) => void;
   sendMessage: (content: string) => Promise<void>;
   cancelRequest: () => void;
-  clearMessages: () => void;
 }
 
 // ============================================================
 // Store
 // ============================================================
 
-const defaultSessionId = "session_default";
-
-function makeMessage(role: Message["role"], parts: MessagePart[]): Message {
-  return {
-    id: uid(),
-    sessionId: defaultSessionId,
-    role,
-    parts,
-    timestamp: Date.now(),
-  };
-}
-
 export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   isLoading: false,
-  runtime: new EchoRuntime(),
+  sessionId: "default",
+
+  setSessionId: (id: string) => set({ sessionId: id, messages: [] }),
+
+  loadMessages: (msgs: Message[]) => set({ messages: msgs }),
 
   sendMessage: async (content: string) => {
-    const { runtime, messages } = get();
+    const { messages } = get();
+    const sessionId = get().sessionId;
+
+    // Create a fresh runtime for each message (stateless for now)
+    const runtime = new AgentBridge();
 
     // Add user message
-    const userMsg = makeMessage("user", [{ type: "text", content }]);
+    const userMsg = makeMessage("user", sessionId, [{ type: "text", content }]);
     set({ messages: [...messages, userMsg], isLoading: true });
 
     // Create placeholder for assistant response
-    const assistantMsg = makeMessage("assistant", [{ type: "text", content: "" }]);
+    const assistantMsg = makeMessage("assistant", sessionId, [{ type: "text", content: "" }]);
     set({ messages: [...get().messages, assistantMsg] });
 
     try {
@@ -70,12 +77,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
             const msg = { ...updated[idx]! };
             const parts = [...msg.parts];
 
-            // Append to the last text part or create a new one
             const lastPart = parts[parts.length - 1];
             if (lastPart && lastPart.type === "text") {
               parts[parts.length - 1] = {
                 ...lastPart,
-                content: lastPart.content + event.content,
+                content: (lastPart.content || "") + event.content,
               };
             } else {
               parts.push({ type: "text", content: event.content });
@@ -137,24 +143,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const msg = { ...updated[idx]! };
         updated[idx] = {
           ...msg,
-          parts: [
-            ...msg.parts,
-            { type: "text", content: `Error: ${String(err)}` },
-          ],
+          parts: [...msg.parts, { type: "text", content: `Error: ${String(err)}` }],
         };
         set({ messages: updated });
       }
     } finally {
       set({ isLoading: false });
+      runtime.destroy();
     }
   },
 
   cancelRequest: () => {
-    get().runtime.abort();
+    // We need to reach the runtime to abort
+    // For now, simple state change
     set({ isLoading: false });
-  },
-
-  clearMessages: () => {
-    set({ messages: [] });
   },
 }));
