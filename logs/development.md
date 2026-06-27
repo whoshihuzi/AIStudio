@@ -43,7 +43,7 @@
 - No `npm install` executed (per Milestone 1 constraints)
 
 ### Git Commit
-- Hash: (to be filled after commit)
+- Hash: `d88c430`
 - Message: `chore: initialize project foundation`
 
 ### Notes
