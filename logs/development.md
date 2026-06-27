@@ -54,3 +54,63 @@
 
 ### Next Milestone
 Milestone 2: Electron Bare Application
+
+---
+
+## 2026-06-27 — Milestone 2: Electron Bare Application
+
+### Objectives
+- Install Electron and TypeScript compilation toolchain
+- Create minimal main process, preload script, and static renderer
+- Launch a native Electron window with no framework or styling dependencies
+
+### Completed Work
+- Installed `electron` (v42.5.0), `typescript`, `@types/node` as devDependencies
+- Created `src/main/index.ts` — Electron main process with security defaults:
+  - `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`
+  - Window: 1200x800, dark background (#1e1e1e)
+- Created `src/preload/index.ts` — empty contextBridge skeleton
+- Created `src/renderer/index.html` — static HTML page with CSP header
+- Updated `package.json` — added `compile` and `start` scripts
+- Fixed `tsconfig.node.json` — updated to `module: "Node16"`, `moduleResolution: "node16"`
+- Removed `tsconfig.web.json` from root references temporarily (no TS files in renderer yet)
+- Configured `ELECTRON_MIRROR` to use npmmirror.com mirror for binary download
+- Verified: Electron window launches and stays running
+
+### Files Created/Modified
+| File | Action |
+|------|--------|
+| `src/main/index.ts` | Created |
+| `src/preload/index.ts` | Created |
+| `src/renderer/index.html` | Created |
+| `package.json` | Modified (scripts, dependencies) |
+| `tsconfig.json` | Modified (removed web reference) |
+| `tsconfig.node.json` | Modified (module/moduleResolution) |
+| `package-lock.json` | Created (auto-generated) |
+
+### Installed Dependencies
+| Package | Version | Type |
+|---------|---------|------|
+| electron | 42.5.0 | devDependency |
+| typescript | (latest) | devDependency |
+| @types/node | (latest) | devDependency |
+
+### Verification Results
+- `npm run compile` — TypeScript compiles successfully, zero errors
+- `npm start` — Native Electron window appears with "AI Studio" title and dark background
+- Process stays running while window is open (verified via process polling)
+- No React code present
+- No Vite configuration present
+
+### Git Commit
+- Hash: `9714700`
+- Message: `feat: launch Electron bare application`
+
+### Notes
+- Electron binary download required npmmirror.com mirror due to GitHub connectivity issues
+- `tsconfig.web.json` is present but temporarily excluded from project references (will be re-added in Milestone 3 when React introduces .tsx files)
+- Security defaults set from day one: contextIsolation, no nodeIntegration, sandbox mode
+- Window background color matches the planned dark theme (#1e1e1e)
+
+### Next Milestone
+Milestone 3: React Renderer Integration
