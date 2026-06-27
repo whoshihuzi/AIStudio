@@ -2,45 +2,70 @@ import { spawn, type ChildProcess } from "child_process";
 import { createInterface } from "readline";
 import type { AgentEvent } from "./types.js";
 
+// ============================================================
+// ParseResult — returned by parseLine
+// ============================================================
+
+export interface ParseResult {
+  events: AgentEvent[];
+  /** Adapter can update its opaque state (e.g. capture sessionId) */
+  runtimeStateUpdate?: Record<string, unknown>;
+}
+
+// ============================================================
+// ProcessAgentRuntime — abstract base
+// ============================================================
+
 /**
- * ProcessAgentRuntime is the abstract base for any CLI-based agent runtime.
+ * Abstract base for any CLI-based agent runtime.
  *
- * It manages the full process lifecycle:
- *   - spawn / stdout parsing / stderr capture / abort / cleanup
+ * Lifecycle: spawn → parse stdout lines → emit AgentEvent[] → process exits.
  *
- * Subclasses only need to implement:
- *   - buildCommand(prompt): how to launch the CLI
- *   - parseLine(line): how to interpret one line of stdout
+ * Subclasses implement:
+ *   - buildCommand(prompt, state): how to launch the CLI
+ *   - parseLine(line, state):    pure function, interpret one stdout line
+ *   - parseStderrLine(line, state): same for stderr
  */
 export abstract class ProcessAgentRuntime {
   private proc: ChildProcess | null = null;
   private aborted = false;
   private running = false;
 
-  /** Human-readable adapter name (e.g. "hermes", "claude-code") */
+  /** Per-adapter opaque state (e.g. Hermes sessionId) */
+  protected runtimeState: Record<string, unknown> = {};
+
+  /** Human-readable adapter name */
   abstract readonly adapterName: string;
 
-  /** Build the shell command for a given prompt */
-  protected abstract buildCommand(prompt: string): {
-    cmd: string;
-    args: string[];
-    env?: Record<string, string>;
-  };
+  // ---- Subclass hooks ----
 
-  /** Parse one line of stdout into zero or more AgentEvents */
-  protected parseLine(_line: string): AgentEvent[] {
-    return [{ type: "text", content: _line }];
+  protected abstract buildCommand(
+    prompt: string,
+    state: Record<string, unknown>,
+  ): { cmd: string; args: string[]; env?: Record<string, string> };
+
+  protected parseLine(
+    _line: string,
+    _state: Record<string, unknown>,
+  ): ParseResult {
+    return { events: [{ type: "text", content: _line }] };
   }
 
-  /** Parse one line of stderr (default: emit as error event) */
-  protected parseStderrLine(line: string): AgentEvent[] {
-    if (!line.trim()) return [];
-    return [{ type: "error", error: line }];
+  protected parseStderrLine(
+    line: string,
+    _state: Record<string, unknown>,
+  ): ParseResult {
+    if (!line.trim()) return { events: [] };
+    return { events: [{ type: "error", error: line }] };
   }
 
   // ---- Public API ----
 
-  async run(prompt: string, onEvent: (event: AgentEvent) => void): Promise<void> {
+  async run(
+    prompt: string,
+    state: Record<string, unknown>,
+    onEvent: (event: AgentEvent) => void,
+  ): Promise<void> {
     if (this.running) {
       onEvent({ type: "error", error: "Agent is already running" });
       return;
@@ -49,7 +74,7 @@ export abstract class ProcessAgentRuntime {
     this.aborted = false;
     this.running = true;
 
-    const { cmd, args, env } = this.buildCommand(prompt);
+    const { cmd, args, env } = this.buildCommand(prompt, { ...state });
 
     this.proc = spawn(cmd, args, {
       env: { ...process.env, ...env },
@@ -61,16 +86,22 @@ export abstract class ProcessAgentRuntime {
 
     stdout.on("line", (line: string) => {
       if (this.aborted) return;
-      const events = this.parseLine(line);
-      for (const event of events) {
+      const result = this.parseLine(line, { ...this.runtimeState });
+      if (result.runtimeStateUpdate) {
+        Object.assign(this.runtimeState, result.runtimeStateUpdate);
+      }
+      for (const event of result.events) {
         onEvent(event);
       }
     });
 
     stderr.on("line", (line: string) => {
       if (this.aborted) return;
-      const events = this.parseStderrLine(line);
-      for (const event of events) {
+      const result = this.parseStderrLine(line, { ...this.runtimeState });
+      if (result.runtimeStateUpdate) {
+        Object.assign(this.runtimeState, result.runtimeStateUpdate);
+      }
+      for (const event of result.events) {
         onEvent(event);
       }
     });
@@ -98,7 +129,6 @@ export abstract class ProcessAgentRuntime {
     this.aborted = true;
     if (this.proc) {
       this.proc.kill("SIGTERM");
-      // Force kill after 3s if still alive
       setTimeout(() => {
         if (this.proc && !this.proc.killed) {
           this.proc.kill("SIGKILL");
@@ -109,5 +139,15 @@ export abstract class ProcessAgentRuntime {
 
   isRunning(): boolean {
     return this.running;
+  }
+
+  /** Export current adapter state for session persistence */
+  getRuntimeState(): Record<string, unknown> {
+    return { ...this.runtimeState };
+  }
+
+  /** Restore adapter state from persisted session */
+  setRuntimeState(state: Record<string, unknown>): void {
+    this.runtimeState = { ...state };
   }
 }

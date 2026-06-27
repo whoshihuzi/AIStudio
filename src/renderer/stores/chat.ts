@@ -53,8 +53,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const { messages } = get();
     const sessionId = get().sessionId;
 
-    // Create a fresh runtime for each message (stateless for now)
-    const runtime = new AgentBridge();
+    // Create runtime linked to this session (passes sessionId for --resume)
+    const runtime = new AgentBridge(sessionId !== "default" ? sessionId : undefined);
 
     // Add user message
     const userMsg = makeMessage("user", sessionId, [{ type: "text", content }]);

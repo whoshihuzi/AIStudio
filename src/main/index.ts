@@ -16,7 +16,7 @@ function createWindow(): void {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true,
+      sandbox: false,
       preload: join(__dirname, "../preload/index.mjs"),
     },
   });
@@ -32,13 +32,29 @@ function createWindow(): void {
 // IPC: Agent Runtime
 // ============================================================
 
-ipcMain.on("agent:send", (_event, prompt: string) => {
+ipcMain.on("agent:send", async (_event, prompt: string, sessionId?: string) => {
   const win = mainWindow;
   if (!win) return;
 
-  runtimeManager.run("hermes", prompt, (agentEvent: AgentEvent) => {
+  // Load persisted runtimeState
+  let runtimeState: Record<string, unknown> = {};
+  if (sessionId) {
+    const session = sessionStore.loadSession(sessionId);
+    runtimeState = (session?.meta.runtimeState as Record<string, unknown>) ?? {};
+  }
+
+  await runtimeManager.run("hermes", prompt, runtimeState, (agentEvent: AgentEvent) => {
     win.webContents.send("agent:event", agentEvent);
   });
+
+  // Persist updated runtimeState back to session
+  if (sessionId) {
+    const session = sessionStore.loadSession(sessionId);
+    if (session) {
+      session.meta.runtimeState = runtimeManager.getRuntimeState();
+      sessionStore.saveSession(session);
+    }
+  }
 });
 
 ipcMain.on("agent:abort", () => {

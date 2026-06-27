@@ -6,7 +6,7 @@ declare module "*.css" {}
 interface Window {
   api: {
     agent: {
-      send: (prompt: string) => void;
+      send: (prompt: string, sessionId?: string) => void;
       abort: () => void;
       onEvent: (
         callback: (event: {

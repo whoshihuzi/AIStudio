@@ -17,6 +17,8 @@ export interface SessionMeta {
   title: string;
   runtime: string;
   adapter: string;
+  /** Per-adapter opaque state (e.g. { sessionId: "abc123" } for Hermes) */
+  runtimeState?: Record<string, unknown>;
   createdAt: number;
   updatedAt: number;
 }

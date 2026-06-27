@@ -14,8 +14,10 @@ export class AgentBridge implements IAgentRuntime {
   private eventQueue: AgentEvent[] = [];
   private resolveNext: ((event: AgentEvent) => void) | null = null;
   private done = false;
+  private sessionId: string | undefined;
 
-  constructor() {
+  constructor(sessionId?: string) {
+    this.sessionId = sessionId;
     const unsub = window.api.agent.onEvent((rawEvent) => {
       const event = rawEvent as AgentEvent;
       if (this.resolveNext) {
@@ -36,7 +38,7 @@ export class AgentBridge implements IAgentRuntime {
     this.eventQueue = [];
 
     // Fire IPC — main process will start streaming events back
-    window.api.agent.send(prompt);
+    window.api.agent.send(prompt, this.sessionId);
 
     while (!this.done) {
       if (this.eventQueue.length > 0) {

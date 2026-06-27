@@ -45,7 +45,8 @@ export interface SessionData {
 
 contextBridge.exposeInMainWorld("api", {
   agent: {
-    send: (prompt: string) => ipcRenderer.send("agent:send", prompt),
+    send: (prompt: string, sessionId?: string) =>
+      ipcRenderer.send("agent:send", prompt, sessionId),
     abort: () => ipcRenderer.send("agent:abort"),
     onEvent: (callback: (event: AgentEvent) => void) => {
       const handler = (_event: Electron.IpcRendererEvent, data: AgentEvent) =>
