@@ -59,6 +59,30 @@ export interface DashboardRawData {
 }
 
 // ============================================================
+// Project Identity — workspace identity + git snapshot
+// ============================================================
+
+export interface ProjectInfo {
+  projectName: string;
+  workspacePath: string;
+  branch: string;
+  latestTag: string;
+  headCommit: string;
+  isClean: boolean;
+}
+
+// ============================================================
+// Activity State — global loading indicator
+// ============================================================
+
+export type ActivityState =
+  | "idle"
+  | "refreshing"
+  | "running-checks"
+  | "building"
+  | "typechecking";
+
+// ============================================================
 // Validation — internal, never exposed to Renderer
 // ============================================================
 

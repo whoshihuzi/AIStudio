@@ -1,9 +1,5 @@
 // ============================================================
 // DashboardService — single public entry point for Dashboard data.
-//
-// Assembles data from independent providers. The Renderer never
-// knows which provider produced each piece — it only sees the
-// assembled DashboardRawData.
 // ============================================================
 
 import { GitProvider } from "./GitProvider.js";
@@ -11,7 +7,11 @@ import { TodoProvider } from "./TodoProvider.js";
 import { SessionProvider } from "./SessionProvider.js";
 import { BuildProvider } from "./BuildProvider.js";
 import { ValidationProvider } from "./ValidationProvider.js";
-import type { DashboardRawData, BuildStatus, ValidationReport } from "./types.js";
+import { ProjectInfoProvider } from "./ProjectInfoProvider.js";
+import type {
+  DashboardRawData, BuildStatus, ValidationReport,
+  ProjectInfo, ActivityState,
+} from "./types.js";
 
 export class DashboardService {
   private readonly git = new GitProvider();
@@ -19,41 +19,87 @@ export class DashboardService {
   private readonly session = new SessionProvider();
   private readonly build = new BuildProvider();
   private readonly validator = new ValidationProvider();
+  private readonly projectInfo = new ProjectInfoProvider();
 
   // ----------------------------------------------------------
-  // Get full snapshot (fast — git + docs + sessions)
+  // Activity state (shared across all async operations)
   // ----------------------------------------------------------
 
-  async getData(): Promise<DashboardRawData> {
-    const milestone = this.todo.getMilestoneProgress();
+  private _activity: ActivityState = "idle";
 
-    // Merge Git data into milestone
-    if (milestone) {
-      milestone.baseline = this.git.getBaseline();
-      milestone.branch = this.git.getBranch();
-      milestone.headCommit = this.git.getHeadCommit();
-    }
+  get activity(): ActivityState {
+    return this._activity;
+  }
 
-    const data: DashboardRawData = {
-      milestone,
-      workingTree: this.git.getWorkingTree(),
-      nextActions: this.todo.getNextActions(),
-      recent: {
-        commits: this.git.getRecentCommits(5),
-        sessions: this.session.getRecentSessions(3),
-      },
-    };
-
-    // In dev mode, validate every piece of data against its source
-    if (isDevMode()) {
-      this.runValidation(data);
-    }
-
-    return data;
+  private setActivity(state: ActivityState): void {
+    this._activity = state;
   }
 
   // ----------------------------------------------------------
-  // Validation (dev-mode only, never exposed to Renderer)
+  // Project Identity
+  // ----------------------------------------------------------
+
+  getProjectInfo(): ProjectInfo {
+    this.projectInfo.ensureMetadata();
+    return this.projectInfo.getProjectInfo();
+  }
+
+  // ----------------------------------------------------------
+  // Get full snapshot
+  // ----------------------------------------------------------
+
+  async getData(): Promise<DashboardRawData> {
+    this.setActivity("refreshing");
+    try {
+      const milestone = this.todo.getMilestoneProgress();
+
+      if (milestone) {
+        milestone.baseline = this.git.getBaseline();
+        milestone.branch = this.git.getBranch();
+        milestone.headCommit = this.git.getHeadCommit();
+      }
+
+      const data: DashboardRawData = {
+        milestone,
+        workingTree: this.git.getWorkingTree(),
+        nextActions: this.todo.getNextActions(),
+        recent: {
+          commits: this.git.getRecentCommits(5),
+          sessions: this.session.getRecentSessions(3),
+        },
+      };
+
+      if (isDevMode()) {
+        this.runValidation(data);
+      }
+
+      return data;
+    } finally {
+      if (this._activity === "refreshing") {
+        this.setActivity("idle");
+      }
+    }
+  }
+
+  // ----------------------------------------------------------
+  // Build checks
+  // ----------------------------------------------------------
+
+  async runChecks(): Promise<BuildStatus> {
+    this.setActivity("running-checks");
+    try {
+      this.setActivity("typechecking");
+      const typecheck = await this.build.runTypecheck();
+      this.setActivity("building");
+      const build = await this.build.runBuild();
+      return { typecheck, build };
+    } finally {
+      this.setActivity("idle");
+    }
+  }
+
+  // ----------------------------------------------------------
+  // Validation
   // ----------------------------------------------------------
 
   private runValidation(data: DashboardRawData): void {
@@ -65,7 +111,6 @@ export class DashboardService {
     }
   }
 
-  /** Log a compact summary to main-process console. */
   private logReport(report: ValidationReport): void {
     const icon = report.failed === 0 ? "✓" : "✗";
     console.log(
@@ -83,23 +128,7 @@ export class DashboardService {
       }
     }
   }
-
-  // ----------------------------------------------------------
-  // Run quality checks (slow — spawns npm processes)
-  // ----------------------------------------------------------
-
-  async runChecks(): Promise<BuildStatus> {
-    const [typecheck, build] = await Promise.all([
-      this.build.runTypecheck(),
-      this.build.runBuild(),
-    ]);
-    return { typecheck, build };
-  }
 }
-
-// ----------------------------------------------------------
-// Dev mode detection
-// ----------------------------------------------------------
 
 function isDevMode(): boolean {
   return (
@@ -108,5 +137,4 @@ function isDevMode(): boolean {
   );
 }
 
-/** Singleton for IPC handlers. */
 export const dashboardService = new DashboardService();

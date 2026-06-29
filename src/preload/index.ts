@@ -91,6 +91,11 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.invoke("dashboard:run-checks"),
   },
 
+  project: {
+    getInfo: (): Promise<unknown> =>
+      ipcRenderer.invoke("project:get-info"),
+  },
+
   config: {
     get: (key: string): Promise<unknown> =>
       ipcRenderer.invoke("config:get", key),

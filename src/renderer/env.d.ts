@@ -133,6 +133,16 @@ interface Window {
       getData: () => Promise<DashboardRawData>;
       runChecks: () => Promise<{ typecheck: string; build: string }>;
     };
+    project: {
+      getInfo: () => Promise<{
+        projectName: string;
+        workspacePath: string;
+        branch: string;
+        latestTag: string;
+        headCommit: string;
+        isClean: boolean;
+      }>;
+    };
     config: {
       get: (key: string) => Promise<unknown>;
       set: (key: string, value: unknown) => Promise<void>;

@@ -170,6 +170,19 @@ Presentation → Application → Domain ← Infrastructure
 
 ---
 
+## 15. Workspace Identity
+
+**Every dashboard must identify which project it represents.**
+
+- `ProjectInfoProvider` composes `GitProvider` + `config-store` — does not duplicate Git logic
+- Workspace identity includes: project name, absolute path, branch, latest tag, HEAD, clean/dirty
+- `workspace/config.json` stores persistent metadata: `projectName`, `workspacePath`, `createdAt`
+- The Dashboard header is the authoritative display of workspace identity — not a title bar
+- Activity state (`idle` / `refreshing` / `running-checks` / `building` / `typechecking`) is global — components never maintain their own loading flags
+- Renderer receives `ProjectInfo` via `project:get-info` IPC — never accesses Git or filesystem
+
+---
+
 ## Violation Response
 
 If you find code that violates these principles:

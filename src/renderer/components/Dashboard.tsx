@@ -5,6 +5,7 @@
 import { useEffect } from "react";
 import { useDashboardStore } from "@/stores/dashboard";
 import { useTranslation } from "@/i18n/useTranslation";
+import { DashboardHeader } from "./DashboardHeader";
 import { WhereAmI } from "./WhereAmI";
 import { IsHealthy } from "./IsHealthy";
 import { WhatNext } from "./WhatNext";
@@ -46,8 +47,9 @@ export function Dashboard() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gray-900">
-      <div className="max-w-3xl mx-auto px-6 py-6 space-y-6">
+    <div className="flex-1 flex flex-col overflow-y-auto bg-gray-900">
+      <DashboardHeader />
+      <div className="max-w-3xl mx-auto px-6 py-6 space-y-6 w-full">
         <WhereAmI data={data} />
         <IsHealthy data={data} build={build} />
         <WhatNext data={data} />
