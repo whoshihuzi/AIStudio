@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import { useWorkspaceStore } from "@/stores/workspace";
+import { useWorkspacePreviewStore } from "@/stores/workspace-preview";
 
 interface Props {
   node: WorkspaceNode;
@@ -13,6 +14,7 @@ interface Props {
 export function WorkspaceTreeNode({ node, depth }: Props) {
   const expanded = useWorkspaceStore((s) => s.expanded);
   const toggleDirectory = useWorkspaceStore((s) => s.toggleDirectory);
+  const openPreview = useWorkspacePreviewStore((s) => s.open);
   const [children, setChildren] = useState<WorkspaceNode[] | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -20,23 +22,23 @@ export function WorkspaceTreeNode({ node, depth }: Props) {
   const isOpen = expanded.has(node.path);
 
   async function handleToggle() {
-    if (!isDir) return;
-    toggleDirectory(node.path);
-    if (!isOpen && children === null) {
-      setLoading(true);
-      try {
-        const raw = await window.api.workspace.list(node.path);
-        const list: WorkspaceNode[] = Array.isArray(raw) ? raw as WorkspaceNode[] : [];
-        // Sort: directories first, then alphabetical
-        const sorted = [...list].sort((a, b) => {
-          if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
-          return a.name.localeCompare(b.name);
-        });
-        setChildren(sorted);
-      } catch {
-        setChildren([]);
+    if (isDir) {
+      toggleDirectory(node.path);
+      if (!isOpen && children === null) {
+        setLoading(true);
+        try {
+          const raw = await window.api.workspace.list(node.path);
+          const list: WorkspaceNode[] = Array.isArray(raw) ? raw as WorkspaceNode[] : [];
+          const sorted = [...list].sort((a, b) => {
+            if (a.type !== b.type) return a.type === "directory" ? -1 : 1;
+            return a.name.localeCompare(b.name);
+          });
+          setChildren(sorted);
+        } catch { setChildren([]); }
+        setLoading(false);
       }
-      setLoading(false);
+    } else {
+      openPreview(node.path);
     }
   }
 
