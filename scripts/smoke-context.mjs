@@ -1,17 +1,22 @@
-// Smoke test: verifies ContextBuilder produces valid markdown.
-// Run with: node --experimental-vm-modules scripts/smoke-context.mjs
-// Or just check the debug output at workspace/debug/context.md after
-// running the app in dev mode.
+// Smoke test: verifies ContextBuilder produces valid markdown
+// with context injection stats. Run via electron-vite or directly
+// after build against out/main/index.js.
 
 import { ContextBuilder } from "../src/main/context/ContextBuilder.js";
 
 const builder = new ContextBuilder();
-const output = builder.build({
+const result = builder.build({
   tokenBudget: 4000,
   userPrompt: "TEST PROMPT — verify context injection works",
 });
 
-// Basic validation
+const output = result.augmentedPrompt;
+
+// Statistics
+console.log(`Sections: ${result.sectionCount} included, ${result.trimmedSections} trimmed`);
+console.log(`Token estimate: ~${result.tokenEstimate}\n`);
+
+// Content checks
 const checks: Array<[string, boolean]> = [
   ["non-empty output", output.length > 0],
   ["contains Project Context header", output.includes("# Project Context")],
@@ -20,8 +25,11 @@ const checks: Array<[string, boolean]> = [
   ["contains Environment", output.includes("## Environment")],
   ["contains Architecture", output.includes("## Architecture")],
   ["contains Key Principles", output.includes("## Key Principles")],
+  ["contains Recent Commits", output.includes("## Recent Commits")],
   ["contains TEST PROMPT", output.includes("TEST PROMPT")],
   ["user prompt after separator", output.includes("---\n\nTEST PROMPT")],
+  ["section count > 0", result.sectionCount > 0],
+  ["token estimate > 0", result.tokenEstimate > 0],
 ];
 
 let passed = 0;

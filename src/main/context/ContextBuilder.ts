@@ -27,7 +27,7 @@ import {
   createRecentDecisionsSection,
   createRecentCommitsSection,
 } from "./sections.js";
-import type { ContextRequest, ContextBuilder as IBuilder } from "./types.js";
+import type { ContextRequest, ContextBuildResult, ContextBuilder as IBuilder } from "./types.js";
 
 export class ContextBuilder implements IBuilder {
   private readonly registry = new ContextSectionRegistry();
@@ -50,31 +50,42 @@ export class ContextBuilder implements IBuilder {
     this.registry.register(createRecentCommitsSection(git));
   }
 
-  build(request: ContextRequest): string {
-    const sections = this.registry.getAll();
-    const allocated = this.budget.allocate(sections, request.tokenBudget);
+  build(request: ContextRequest): ContextBuildResult {
+    const allSections = this.registry.getAll();
+    const allocated = this.budget.allocate(allSections, request.tokenBudget);
     const context = this.formatter.format(allocated);
-    const full = context + "\n\n---\n\n" + request.userPrompt;
+    const augmentedPrompt = context + "\n\n---\n\n" + request.userPrompt;
+
+    const result: ContextBuildResult = {
+      augmentedPrompt,
+      tokenEstimate: allocated.reduce((sum, s) => sum + s.estimatedTokens, 0),
+      sectionCount: allocated.length,
+      trimmedSections: allSections.length - allocated.length,
+    };
 
     if (isDevMode()) {
-      this.writeDebug(full);
+      this.writeDebug(augmentedPrompt, result);
     }
 
-    return full;
+    return result;
   }
 
   // ----------------------------------------------------------
   // Debug output (dev only)
   // ----------------------------------------------------------
 
-  private writeDebug(content: string): void {
+  private writeDebug(content: string, stats: ContextBuildResult): void {
     try {
       const dir = join(process.cwd(), "workspace", "debug");
       if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
       writeFileSync(join(dir, "context.md"), content, "utf-8");
-      console.log("[ContextBuilder] debug output → workspace/debug/context.md");
+      console.log(
+        `[ContextBuilder] debug → workspace/debug/context.md  ` +
+        `${stats.sectionCount} sections, ~${stats.tokenEstimate} tokens` +
+        (stats.trimmedSections > 0 ? `, ${stats.trimmedSections} trimmed` : ""),
+      );
     } catch {
-      // Best-effort — debug output failure must not affect production
+      // Best-effort
     }
   }
 }

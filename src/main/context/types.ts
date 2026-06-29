@@ -60,6 +60,13 @@ export interface MarkdownFormatter {
 // ContextBuilder — orchestration only
 // ----------------------------------------------------------
 
+export interface ContextBuildResult {
+  augmentedPrompt: string;
+  tokenEstimate: number;
+  sectionCount: number;
+  trimmedSections: number;
+}
+
 export interface ContextBuilder {
-  build(request: ContextRequest): string;
+  build(request: ContextRequest): ContextBuildResult;
 }
