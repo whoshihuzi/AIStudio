@@ -169,32 +169,20 @@ ipcMain.handle("brain:get-data", () => {
 // IPC: Workspace
 // ============================================================
 
-ipcMain.handle("workspace:read", (_event, path: string) => {
-  return workspaceService.readFile(path);
-});
-
-ipcMain.handle("workspace:write", (_event, path: string, content: string) => {
-  workspaceService.writeFile(path, content);
-});
-
 ipcMain.handle("workspace:list", (_event, path: string) => {
-  return workspaceService.listDirectory(path);
+  return workspaceService.listNodes(path);
 });
 
 ipcMain.handle("workspace:stat", (_event, path: string) => {
-  return workspaceService.stat(path);
+  return workspaceService.statNode(path);
+});
+
+ipcMain.handle("workspace:read", (_event, path: string) => {
+  return workspaceService.readFileNode(path);
 });
 
 ipcMain.handle("workspace:exists", (_event, path: string) => {
   return workspaceService.exists(path);
-});
-
-ipcMain.handle("workspace:glob", (_event, pattern: string) => {
-  return workspaceService.glob(pattern);
-});
-
-ipcMain.handle("workspace:search", (_event, query: string, opts?: unknown) => {
-  return workspaceService.searchText(query, opts as Parameters<typeof workspaceService.searchText>[1]);
 });
 
 // ============================================================

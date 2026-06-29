@@ -1,13 +1,14 @@
 // ============================================================
 // WorkspaceService — proxy to WorkspaceProvider.
-// Owns the root + resolver singletons, injects them into
-// WorkspaceProvider. Future: injects into SearchProvider too.
+// Owns root + resolver singletons. Exposes both internal
+// and shared Resource Model methods.
 // ============================================================
 
 import { WorkspaceRootProvider } from "./WorkspaceRootProvider.js";
 import { PathResolver } from "./PathResolver.js";
 import { WorkspaceProvider } from "./WorkspaceProvider.js";
 import type { IWorkspaceProvider, FileContent, FileStat, DirectoryEntry, SearchResult, GlobResult } from "./types.js";
+import type { WorkspaceNode, FileNode } from "../../shared/workspace/types.js";
 
 const rootProvider = new WorkspaceRootProvider();
 const pathResolver = new PathResolver(rootProvider);
@@ -15,6 +16,7 @@ const pathResolver = new PathResolver(rootProvider);
 export class WorkspaceService implements IWorkspaceProvider {
   private readonly provider = new WorkspaceProvider(rootProvider, pathResolver);
 
+  // Internal (Provider types — for internal use)
   readFile(path: string): FileContent { return this.provider.readFile(path); }
   writeFile(path: string, content: string): void { this.provider.writeFile(path, content); }
   exists(path: string): boolean { return this.provider.exists(path); }
@@ -24,9 +26,12 @@ export class WorkspaceService implements IWorkspaceProvider {
   searchText(query: string, opts?: Parameters<IWorkspaceProvider["searchText"]>[1]): SearchResult {
     return this.provider.searchText(query, opts);
   }
+
+  // Shared Resource Model (for IPC → Renderer consumption)
+  listNodes(path: string): WorkspaceNode[] { return this.provider.listNodes(path); }
+  statNode(path: string): FileNode { return this.provider.statNode(path); }
+  readFileNode(path: string): { node: FileNode; content: string } { return this.provider.readFileNode(path); }
 }
 
-/** Shared singletons — inject these into future providers. */
 export { rootProvider, pathResolver };
-
 export const workspaceService = new WorkspaceService();

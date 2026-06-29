@@ -102,20 +102,14 @@ contextBridge.exposeInMainWorld("api", {
   },
 
   workspace: {
-    read: (path: string): Promise<unknown> =>
-      ipcRenderer.invoke("workspace:read", path),
-    write: (path: string, content: string): Promise<void> =>
-      ipcRenderer.invoke("workspace:write", path, content),
     list: (path: string): Promise<unknown> =>
       ipcRenderer.invoke("workspace:list", path),
     stat: (path: string): Promise<unknown> =>
       ipcRenderer.invoke("workspace:stat", path),
+    read: (path: string): Promise<unknown> =>
+      ipcRenderer.invoke("workspace:read", path),
     exists: (path: string): Promise<boolean> =>
       ipcRenderer.invoke("workspace:exists", path),
-    glob: (pattern: string): Promise<unknown> =>
-      ipcRenderer.invoke("workspace:glob", pattern),
-    search: (query: string, opts?: unknown): Promise<unknown> =>
-      ipcRenderer.invoke("workspace:search", query, opts),
   },
 
   config: {

@@ -53,26 +53,14 @@ interface BrainData {
   currentFocus: { milestone: string; sprint: string; goal: string; startedAt: number; updatedAt: number };
 }
 
-interface FileStat {
-  path: string; absolutePath: string; isDirectory: boolean; isFile: boolean;
-  size: number; modifiedAt: number; createdAt: number;
-}
-interface DirectoryEntry {
-  name: string; path: string; isDirectory: boolean; isFile: boolean;
-}
-interface FileContent {
-  path: string; content: string; stat: FileStat; language?: string;
-}
-interface SearchMatch {
-  file: string; line: number; column: number; content: string; context: string;
-}
-interface SearchResult {
-  query: string; matches: SearchMatch[]; totalFiles: number; totalMatches: number;
-}
-interface GlobResult { pattern: string; matches: string[]; }
-interface SearchOptions {
-  maxResults?: number; includePattern?: string; excludePattern?: string; caseSensitive?: boolean;
-}
+// Shared Resource Model — imported from src/shared/workspace/types.ts
+// Duplicate definitions removed; use these interfaces directly.
+interface WorkspaceNode { id: string; name: string; path: string; type: "file" | "directory"; }
+interface FileNode extends WorkspaceNode { type: "file"; language?: string; size: number; modifiedAt: number; }
+interface DirectoryNode extends WorkspaceNode { type: "directory"; children?: WorkspaceNode[]; }
+interface WorkspaceSelection { nodes: WorkspaceNode[]; anchor?: WorkspaceNode; }
+interface WorkspaceChange { path: string; type: "created" | "modified" | "deleted" | "renamed"; oldPath?: string; timestamp: number; }
+interface WorkspaceMetadata { root: string; totalFiles: number; totalDirectories: number; languageBreakdown: Record<string, number>; }
 
 // Preload API exposed via contextBridge
 interface Window {
@@ -178,13 +166,10 @@ interface Window {
       getData: () => Promise<BrainData>;
     };
     workspace: {
-      read: (path: string) => Promise<FileContent>;
-      write: (path: string, content: string) => Promise<void>;
-      list: (path: string) => Promise<DirectoryEntry[]>;
-      stat: (path: string) => Promise<FileStat>;
+      list: (path: string) => Promise<WorkspaceNode[]>;
+      stat: (path: string) => Promise<FileNode>;
+      read: (path: string) => Promise<{ node: FileNode; content: string }>;
       exists: (path: string) => Promise<boolean>;
-      glob: (pattern: string) => Promise<GlobResult>;
-      search: (query: string, opts?: SearchOptions) => Promise<SearchResult>;
     };
     config: {
       get: (key: string) => Promise<unknown>;

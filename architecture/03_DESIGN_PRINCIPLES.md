@@ -199,6 +199,20 @@ Presentation → Application → Domain ← Infrastructure
 
 ---
 
+## 17. Shared Resource Model
+
+**All cross-layer data objects must use a single public model.**
+
+- `src/shared/workspace/types.ts` defines the canonical Workspace Resource Model
+- Types have zero dependencies on Electron, Node.js, or React — pure data
+- `WorkspaceMapper` is the ONLY place that converts internal Provider types → shared types
+- Renderer and Main process share the same model — no separate definitions
+- Provider internal types (`FileStat`, `DirectoryEntry`) are never exposed to IPC
+- New capabilities (Explorer, Search, Diff, Patch, Index) must reuse the Resource Model before creating new types
+- Adding a new shared type requires: definition in `src/shared/` → Mapper update → IPC update
+
+---
+
 ## Violation Response
 
 If you find code that violates these principles:
