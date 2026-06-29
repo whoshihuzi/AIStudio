@@ -49,6 +49,11 @@ Quick reference:
 | How is AIStudio developed? | `05_DEVELOPMENT_PROTOCOL.md` |
 | How do I work with the human? | `06_COLLABORATION.md` |
 | What happened last session? | `07_PROJECT_CONTEXT.md` |
+| How does Context Injection work? | `08_CONTEXT_INJECTION.md` |
+| How will Workspace work? | `09_WORKSPACE_INTELLIGENCE.md` |
+| What is the Workspace API? | `10_WORKSPACE_PROVIDER_API.md` |
+| What are the v0.3 milestones? | `11_V0.3_MILESTONE_DESIGN.md` |
+| What's the v0.3 architecture review? | `12_V0.3_ARCHITECTURE_REVIEW.md` |
 | What technologies do we use? | `docs/05_TECH_STACK.md` |
 | What's the development workflow? | `docs/07_DEVELOPMENT_WORKFLOW.md` |
 | Why were key decisions made? | `decisions/` |

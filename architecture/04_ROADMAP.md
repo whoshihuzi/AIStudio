@@ -75,34 +75,31 @@ Features: Architecture Analysis, Automatic Planning, Code Modification, Testing,
 
 ---
 
-## Upcoming Milestones (Prioritized)
+## Upcoming Milestones (v0.3 — Phase 3: Workspace Intelligence)
 
-### M6 — Quality Gates
+### M9 — Workspace Foundation
 
-Establish ESLint + Prettier enforcement. Clean up uncommitted WIP.
+Establish WorkspaceProvider + IPC layer. No UI.
 
-**Why this next**: Quality infrastructure must exist before the codebase grows further.
+**Why this next**: All workspace features (explorer, search, diff) depend on a stable filesystem provider.
 
-### M7 — Project Awareness Dashboard (v0.2.0)
+### M10 — Workspace Explorer
 
-A Dashboard view that answers three questions:
-1. Which Milestone are we in?
-2. How healthy is the project?
-3. What should we do next?
+File tree widget in Dashboard. Read-only browsing.
 
-**Why this next**: This transforms AIStudio from a "chat window" into a "project cockpit." It's the foundation for Phase 2 multi-project management.
+**Why this next**: First visible workspace feature. Users can browse project files.
 
-### M8 — Sprint 4: Workspace
+### M11 — Search & Index
 
-File tree, folder selection, auto-refresh.
+Full-text search across workspace. SearchBar widget.
 
-**Why this next**: Completing the remaining Phase 1 Sprint. Users need to browse project files.
+**Why this next**: AI agents need to find relevant files before making changes.
 
-### M9 — Sprint 6: Diff View
+### M12 — Code Manipulation Foundation
 
-Accept/Reject/Preview for AI-generated code changes.
+Write operations + audit trail. Foundation for Diff.
 
-**Why this next**: The last Phase 1 Sprint. Completes the "Replace PowerShell" goal.
+**Why this next**: Last v0.3 milestone. Enables agents to modify code through AIStudio.
 
 ---
 
