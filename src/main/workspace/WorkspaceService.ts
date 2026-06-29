@@ -1,13 +1,19 @@
 // ============================================================
 // WorkspaceService — proxy to WorkspaceProvider.
-// Future: aggregates SearchProvider, SymbolProvider here.
+// Owns the root + resolver singletons, injects them into
+// WorkspaceProvider. Future: injects into SearchProvider too.
 // ============================================================
 
+import { WorkspaceRootProvider } from "./WorkspaceRootProvider.js";
+import { PathResolver } from "./PathResolver.js";
 import { WorkspaceProvider } from "./WorkspaceProvider.js";
 import type { IWorkspaceProvider, FileContent, FileStat, DirectoryEntry, SearchResult, GlobResult } from "./types.js";
 
+const rootProvider = new WorkspaceRootProvider();
+const pathResolver = new PathResolver(rootProvider);
+
 export class WorkspaceService implements IWorkspaceProvider {
-  private readonly provider = new WorkspaceProvider();
+  private readonly provider = new WorkspaceProvider(rootProvider, pathResolver);
 
   readFile(path: string): FileContent { return this.provider.readFile(path); }
   writeFile(path: string, content: string): void { this.provider.writeFile(path, content); }
@@ -19,5 +25,8 @@ export class WorkspaceService implements IWorkspaceProvider {
     return this.provider.searchText(query, opts);
   }
 }
+
+/** Shared singletons — inject these into future providers. */
+export { rootProvider, pathResolver };
 
 export const workspaceService = new WorkspaceService();
