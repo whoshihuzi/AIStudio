@@ -1,5 +1,6 @@
 import { useSessionStore } from "@/stores/session";
 import { useTranslation } from "@/i18n/useTranslation";
+import { WorkspaceExplorer } from "./WorkspaceExplorer";
 import { useEffect } from "react";
 
 interface SidebarProps {
@@ -41,6 +42,9 @@ export function Sidebar({ activeView, onNavigate }: SidebarProps) {
           {t.sidebar.dashboard}
         </button>
       </div>
+
+      {/* Workspace Explorer */}
+      <WorkspaceExplorer />
 
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-3 border-b border-gray-700">

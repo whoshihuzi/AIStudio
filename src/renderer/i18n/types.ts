@@ -53,6 +53,7 @@ export interface Translations {
     loading: string;
     sessionsCount: string;
     deleteTitle: string;
+    workspace: string;
   };
 }
 

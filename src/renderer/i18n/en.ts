@@ -55,6 +55,7 @@ const en: Translations = {
     loading: "Loading...",
     sessionsCount: "{count} session{plural}",
     deleteTitle: "Delete",
+    workspace: "Workspace",
   },
 };
 

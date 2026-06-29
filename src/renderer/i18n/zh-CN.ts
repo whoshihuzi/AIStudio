@@ -54,6 +54,7 @@ const zhCN: Translations = {
     loading: "加载中...",
     sessionsCount: "{count} 个会话",
     deleteTitle: "删除",
+    workspace: "工作区",
   },
 };
 
