@@ -31,6 +31,7 @@ export interface DashboardState {
   data: DashboardRawData | null;
   build: DashboardBuildStatus;
   projectInfo: ProjectInfo | null;
+  brainData: BrainData | null;
   activity: ActivityState;
   loading: boolean;
   error: string | null;
@@ -43,6 +44,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   data: null,
   build: { typecheck: "unknown", build: "unknown" },
   projectInfo: null,
+  brainData: null,
   activity: "idle",
   loading: false,
   error: null,
@@ -50,11 +52,12 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   refresh: async () => {
     set({ loading: true, activity: "refreshing", error: null });
     try {
-      const [data, projectInfo] = await Promise.all([
+      const [data, projectInfo, brainData] = await Promise.all([
         window.api.dashboard.getData(),
         window.api.project.getInfo(),
+        window.api.brain.getData(),
       ]);
-      set({ data, projectInfo, loading: false, activity: "idle" });
+      set({ data, projectInfo, brainData, loading: false, activity: "idle" });
     } catch (err) {
       set({ error: String(err), loading: false, activity: "idle" });
     }

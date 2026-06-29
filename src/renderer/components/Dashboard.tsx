@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useDashboardStore } from "@/stores/dashboard";
 import { useTranslation } from "@/i18n/useTranslation";
 import { DashboardHeader } from "./DashboardHeader";
+import { ProjectBrain } from "./ProjectBrain";
 import { WhereAmI } from "./WhereAmI";
 import { IsHealthy } from "./IsHealthy";
 import { WhatNext } from "./WhatNext";
@@ -52,6 +53,7 @@ export function Dashboard() {
       <div className="max-w-3xl mx-auto px-6 py-6 space-y-6 w-full">
         <WhereAmI data={data} />
         <IsHealthy data={data} build={build} />
+        <ProjectBrain />
         <WhatNext data={data} />
         <RecentActivity data={data} />
       </div>

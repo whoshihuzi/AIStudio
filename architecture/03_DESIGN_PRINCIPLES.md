@@ -183,6 +183,22 @@ Presentation → Application → Domain ← Infrastructure
 
 ---
 
+## 16. Project Brain — Canonical AI Context
+
+**The Project Brain is the single source of long-term AI context.**
+
+- `workspace/brain/` stores structured JSON with strict TypeScript schemas — no free-form JSON
+- Four files: `project.json`, `architecture.json`, `decisions.json`, `current-focus.json`
+- `BrainProvider` reads Brain data; `DashboardService` aggregates it; Renderer never touches `workspace/brain/`
+- Three distinct knowledge layers, no overlap:
+  - **Docs** (`docs/`) — for humans: product specs, roadmaps, workflows
+  - **Brain** (`workspace/brain/`) — for AI: structured project metadata, architecture, decisions, focus
+  - **Session** (`workspace/sessions/`) — for one conversation: message history, ephemeral context
+- Brain is read-only in v1; future versions will add editing capability
+- Default seed data ensures Brain is never empty on first launch
+
+---
+
 ## Violation Response
 
 If you find code that violates these principles:

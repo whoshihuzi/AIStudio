@@ -38,6 +38,11 @@ export interface Translations {
     gitLabel: string;
     sessionsLabel: string;
     dirtyAction: string;
+    projectBrain: string;
+    currentFocus: string;
+    lastUpdated: string;
+    decisionsLabel: string;
+    layersLabel: string;
   };
   sidebar: {
     dashboard: string;

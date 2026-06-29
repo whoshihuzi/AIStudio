@@ -96,6 +96,11 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.invoke("project:get-info"),
   },
 
+  brain: {
+    getData: (): Promise<unknown> =>
+      ipcRenderer.invoke("brain:get-data"),
+  },
+
   config: {
     get: (key: string): Promise<unknown> =>
       ipcRenderer.invoke("config:get", key),

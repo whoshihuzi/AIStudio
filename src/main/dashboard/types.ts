@@ -83,6 +83,61 @@ export type ActivityState =
   | "typechecking";
 
 // ============================================================
+// Project Brain — long-term AI context (workspace/brain/)
+// ============================================================
+
+export interface BrainProject {
+  name: string;
+  description: string;
+  createdAt: number;
+  updatedAt: number;
+  phase: string;
+  version: string;
+}
+
+export interface BrainArchitecture {
+  layers: Array<{
+    name: string;
+    path: string;
+    status: "stable" | "evolving" | "planned";
+  }>;
+  keyAbstractions: Array<{
+    name: string;
+    file: string;
+    description: string;
+  }>;
+  updatedAt: number;
+}
+
+export interface BrainDecision {
+  id: string;
+  date: string;
+  title: string;
+  status: "accepted" | "proposed" | "superseded";
+  summary: string;
+}
+
+export interface BrainDecisions {
+  decisions: BrainDecision[];
+  updatedAt: number;
+}
+
+export interface BrainCurrentFocus {
+  milestone: string;
+  sprint: string;
+  goal: string;
+  startedAt: number;
+  updatedAt: number;
+}
+
+export interface BrainData {
+  project: BrainProject;
+  architecture: BrainArchitecture;
+  decisions: BrainDecisions;
+  currentFocus: BrainCurrentFocus;
+}
+
+// ============================================================
 // Validation — internal, never exposed to Renderer
 // ============================================================
 

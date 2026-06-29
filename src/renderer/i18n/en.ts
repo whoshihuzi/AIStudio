@@ -40,6 +40,11 @@ const en: Translations = {
     gitLabel: "Git",
     sessionsLabel: "Sessions",
     dirtyAction: "Commit or stash {count} uncommitted changes before starting new work",
+    projectBrain: "Project Brain",
+    currentFocus: "Current Focus",
+    lastUpdated: "Last updated",
+    decisionsLabel: "decisions",
+    layersLabel: "layers",
   },
   sidebar: {
     dashboard: "Dashboard",

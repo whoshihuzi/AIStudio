@@ -39,6 +39,11 @@ const zhCN: Translations = {
     gitLabel: "Git",
     sessionsLabel: "会话",
     dirtyAction: "开始新工作前，先提交或暂存 {count} 个未提交的更改",
+    projectBrain: "项目大脑",
+    currentFocus: "当前焦点",
+    lastUpdated: "最后更新",
+    decisionsLabel: "决策",
+    layersLabel: "层",
   },
   sidebar: {
     dashboard: "仪表盘",

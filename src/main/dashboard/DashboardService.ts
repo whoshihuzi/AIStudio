@@ -8,9 +8,10 @@ import { SessionProvider } from "./SessionProvider.js";
 import { BuildProvider } from "./BuildProvider.js";
 import { ValidationProvider } from "./ValidationProvider.js";
 import { ProjectInfoProvider } from "./ProjectInfoProvider.js";
+import { BrainProvider } from "./BrainProvider.js";
 import type {
   DashboardRawData, BuildStatus, ValidationReport,
-  ProjectInfo, ActivityState,
+  ProjectInfo, ActivityState, BrainData,
 } from "./types.js";
 
 export class DashboardService {
@@ -20,6 +21,7 @@ export class DashboardService {
   private readonly build = new BuildProvider();
   private readonly validator = new ValidationProvider();
   private readonly projectInfo = new ProjectInfoProvider();
+  private readonly brain = new BrainProvider();
 
   // ----------------------------------------------------------
   // Activity state (shared across all async operations)
@@ -42,6 +44,15 @@ export class DashboardService {
   getProjectInfo(): ProjectInfo {
     this.projectInfo.ensureMetadata();
     return this.projectInfo.getProjectInfo();
+  }
+
+  // ----------------------------------------------------------
+  // Project Brain
+  // ----------------------------------------------------------
+
+  getBrainData(): BrainData {
+    this.brain.ensureSeeded();
+    return this.brain.getBrainData();
   }
 
   // ----------------------------------------------------------

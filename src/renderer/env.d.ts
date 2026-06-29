@@ -39,6 +39,20 @@ interface DashboardRawData {
   } | null;
 }
 
+interface BrainData {
+  project: { name: string; description: string; createdAt: number; updatedAt: number; phase: string; version: string };
+  architecture: {
+    layers: Array<{ name: string; path: string; status: string }>;
+    keyAbstractions: Array<{ name: string; file: string; description: string }>;
+    updatedAt: number;
+  };
+  decisions: {
+    decisions: Array<{ id: string; date: string; title: string; status: string; summary: string }>;
+    updatedAt: number;
+  };
+  currentFocus: { milestone: string; sprint: string; goal: string; startedAt: number; updatedAt: number };
+}
+
 // Preload API exposed via contextBridge
 interface Window {
   api: {
@@ -135,13 +149,12 @@ interface Window {
     };
     project: {
       getInfo: () => Promise<{
-        projectName: string;
-        workspacePath: string;
-        branch: string;
-        latestTag: string;
-        headCommit: string;
-        isClean: boolean;
+        projectName: string; workspacePath: string; branch: string;
+        latestTag: string; headCommit: string; isClean: boolean;
       }>;
+    };
+    brain: {
+      getData: () => Promise<BrainData>;
     };
     config: {
       get: (key: string) => Promise<unknown>;
