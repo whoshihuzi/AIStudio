@@ -50,11 +50,9 @@ Hermes Integration
 
 Workspace
 
-* [ ] File tree
-
-* [ ] Folder selection
-
-* [ ] Auto refresh
+* [x] File tree
+* [x] Folder selection
+* [x] Auto refresh
 
 ---
 

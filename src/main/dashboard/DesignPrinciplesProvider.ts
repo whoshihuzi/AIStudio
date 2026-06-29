@@ -24,7 +24,8 @@ export class DesignPrinciplesProvider {
       while ((match = regex.exec(text)) !== null) {
         titles.push(match[1]!);
       }
-      return titles;
+      // Return top 5 most critical for code generation
+      return titles.slice(0, 5);
     } catch {
       return [];
     }

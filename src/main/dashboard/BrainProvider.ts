@@ -106,9 +106,9 @@ export class BrainProvider {
 
   private defaultFocus(): BrainCurrentFocus {
     return {
-      milestone: "M7 — Project Brain v1",
-      sprint: "Knowledge Layer",
-      goal: "Establish the Project Brain as AIStudio's long-term AI context layer",
+      milestone: "M8 — Workspace Context Injection",
+      sprint: "Context Injection",
+      goal: "Establish Context Injection as Runtime-Agnostic infrastructure for all AI agents",
       startedAt: Date.now(),
       updatedAt: Date.now(),
     };

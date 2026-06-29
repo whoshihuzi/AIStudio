@@ -92,14 +92,14 @@ export function createArchitectureSection(brain: BrainProvider): ContextSection<
     required: false,
     collect: () => brain.getBrainData().architecture,
     format: (a) => {
-      const layers = a.layers
+      const layerNames = a.layers
         .filter((l) => l.status === "stable")
-        .map((l) => `  ${l.name} → `)
-        .join("");
+        .map((l) => l.name)
+        .join(" → ");
       const abs = a.keyAbstractions
         .map((k) => `- **${k.name}** — ${k.description}`)
         .join("\n");
-      return `## Architecture\nLayers: ${layers}\nKey abstractions:\n${abs}`;
+      return `## Architecture\nLayers: ${layerNames}\nKey abstractions:\n${abs}`;
     },
   });
 }
@@ -147,7 +147,7 @@ export function createTodoActionsSection(todo: TodoProvider): ContextSection<Nex
 export function createRecentDecisionsSection(brain: BrainProvider): ContextSection<BrainDecision[]> {
   return section({
     id: "brain.decisions",
-    priority: 40,
+    priority: 30,
     estimatedTokens: 80,
     required: false,
     collect: () => brain.getBrainData().decisions.decisions.slice(0, 3),
@@ -167,10 +167,10 @@ export function createRecentCommitsSection(
 ): ContextSection<Array<{ hash: string; subject: string }>> {
   return section({
     id: "git.recent-commits",
-    priority: 30,
-    estimatedTokens: 150,
+    priority: 25,
+    estimatedTokens: 90,
     required: false,
-    collect: () => git.getRecentCommits(5),
+    collect: () => git.getRecentCommits(3),
     format: (commits) =>
       `## Recent Commits\n${commits.map((c) => `- \`${c.hash}\` ${c.subject}`).join("\n")}`,
   });
