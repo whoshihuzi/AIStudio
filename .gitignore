@@ -6,6 +6,9 @@ dist/
 out/
 build/
 workspace/sessions/
+workspace/brain/
+workspace/debug/
+workspace/config.json
 
 # Electron artifacts
 *.exe

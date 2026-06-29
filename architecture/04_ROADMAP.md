@@ -10,8 +10,9 @@
 |---|---|
 | Current Phase | Phase 1 — Foundation |
 | Current Sprint | Sprint 6 (next: Diff / Accept / Reject) |
-| Stable Baseline | v0.1.0 (`ecd825f`) |
-| Next Major Version | v0.2.0 — Project Awareness Dashboard |
+| Stable Baseline | v0.2.0 (`a6d69c4`) |
+| Previous Baseline | v0.1.0 |
+| Next Major Version | v0.3.0 |
 
 ---
 
@@ -67,7 +68,10 @@ Features: Architecture Analysis, Automatic Planning, Code Modification, Testing,
 | M3 | 2026-06-27 | `b02e33e` | React + Vite + Tailwind + Chat shell + Runtime architecture |
 | M4 | 2026-06-27 | `7b0c966` | ProcessAgentRuntime + Hermes adapter + Session persistence |
 | M5 | 2026-06-27 | `f05cccf` | Conversation Rendering Engine (6 MessagePart types) |
-| — | — | `ecd825f` | **v0.1.0 Stable Baseline** (includes SessionPersistence fix) |
+| M6 | 2026-06-27 | `f43dc97` | Project Awareness Dashboard (3-question layout, i18n, Workspace Identity) |
+| M7 | 2026-06-27 | `a787c4a` | Project Brain v1 (Knowledge Layer: 4 brain files, BrainProvider) |
+| M8 | 2026-06-27 | `1807bb6` | Context Injection (ContextBuilder pipeline, Runtime-Agnostic) |
+| — | — | `a6d69c4` | **v0.2.0 Stable Baseline** (M8d Release Freeze) |
 
 ---
 

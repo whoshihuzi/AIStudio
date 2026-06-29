@@ -8,36 +8,37 @@
 
 | Field | Value |
 |---|---|
-| Date | (to be filled) |
-| Contributor | (to be filled) |
-| Milestone worked on | (to be filled) |
+| Date | 2026-06-27 |
+| Contributor | Hermes Agent (deepseek-v4-pro) |
+| Milestone worked on | M8d — Release Freeze (v0.2.0) |
 
 ## Completed This Session
 
-- (to be filled)
+- M8c.5: Context Injection product validation + 5 optimizations
+- M8d: Release freeze — CHANGELOG, ROADMAP, PROJECT_CONTEXT synchronized
+- Regression checklist created
+- Architecture audit passed
+- v0.2.0 tagged
 
 ## Current State
 
-- (to be filled: what's in progress, what's blocked)
+- v0.2.0 stable baseline established
+- All M6-M8 milestones complete
+- Working tree clean
+- 16 Design Principles in AKB
+- 8 Providers, 8 ContextSections, 5 Dashboard widgets
 
 ## Open Questions
 
-- (to be filled)
+- None
 
 ## Known Issues
 
-- (to be filled)
+- `echo-runtime.ts` dead code (defer to v0.3.0 cleanup)
+- `session.ts:56` hardcoded "hermes" string (defer to adapter config system)
 
 ## Next Session
 
-- (to be filled: recommended starting point)
-
----
-
-## Handoff Notes
-
-(Free-form notes from the departing contributor to the next one.)
-
----
-
-**Template**: This file is updated at the end of every development session and read at the start of the next one. It bridges the gap between sessions where different AI agents (or the same agent with a fresh context window) take over.
+- Sprint 4: File tree + Folder selection (remaining Phase 1 task)
+- Sprint 6: Diff view
+- Or begin v0.3.0 with multi-project support (Phase 2)

@@ -1,49 +1,63 @@
 # CHANGELOG
 
-This document records every completed Sprint.
-
-Format
-
----
-
-## YYYY-MM-DD
+## 2026-06-27 — v0.2.0
 
 ### Added
 
-New features.
+**Project Awareness Dashboard**:
+- Three-question Dashboard layout: Where am I? / Is the project healthy? / What should I do next?
+- Milestone progress tracking with Sprint pills and progress bar
+- Working tree status, typecheck/build quality gates
+- Prioritized next-action recommendations from TODO.md
+- ProjectBrain widget — read-only AI context display
+
+**Internationalization**:
+- i18n infrastructure: English + 简体中文
+- Language persistence in `workspace/config.json`
+- Electron native menu: Settings > Language
+- Real-time language switching without restart
+
+**Workspace Identity**:
+- Dashboard header with project name, path, branch, tag, HEAD, clean/dirty
+- Global Activity state: idle/refreshing/running-checks/building/typechecking
+- `workspace/config.json` for project metadata
+
+**Project Brain (Knowledge Layer)**:
+- `workspace/brain/` with 4 structured JSON files (strict TypeScript schemas)
+- `project.json`, `architecture.json`, `decisions.json`, `current-focus.json`
+- BrainProvider with auto-seeding on first launch
+
+**Data Pipeline**:
+- Provider-based architecture: 8 independent providers (Git, Todo, Session, Build, Brain, ProjectInfo, DesignPrinciples, Validation)
+- DashboardService as single aggregation entry point
+- ValidationProvider for data integrity verification
+
+**Context Injection**:
+- ContextBuilder pipeline: Registry → BudgetAllocator → MarkdownFormatter
+- 8 context sections automatically injected before every Agent prompt
+- Runtime-Agnostic: works for Hermes, Claude, GPT, and future agents
+- Token budget control with priority-based allocation
+- Debug output to `workspace/debug/context.md` in dev mode
+
+**Architecture Knowledge Base**:
+- `architecture/` directory with 9 documents
+- BOOTSTRAP, PROJECT_VISION, ARCHITECTURE, DESIGN_PRINCIPLES (16), ROADMAP, DEVELOPMENT_PROTOCOL, COLLABORATION, PROJECT_CONTEXT, CONTEXT_INJECTION
 
 ### Changed
 
-Modified behavior.
+- Session persistence moved from Sidebar component to SessionPersistence module (no React dependency)
+- Exit flush guarantees no message loss on window close
+- All Dashboard UI text migrated to i18n translation keys
+- TypeScript strict schemas for all brain files
 
 ### Fixed
 
-Bug fixes.
+- Session auto-save race condition on window close (debounce now flushes on exit)
+- Stale version numbers removed from architecture docs
 
-### Removed
+### Architecture
 
-Deprecated functionality.
-
-### Notes
-
-Additional observations.
-
----
-
-Example
-
-## 2026-06-28
-
-### Added
-
-Initial Electron project.
-
-React integration.
-
-### Changed
-
-Project directory initialized.
-
-### Notes
-
-Foundation established.
+- 8 Providers: GitProvider, TodoProvider, SessionProvider, BuildProvider, BrainProvider, ProjectInfoProvider, DesignPrinciplesProvider, ValidationProvider
+- 5 Context pipeline classes: ContextBuilder, ContextSectionRegistry, BudgetAllocator, MarkdownFormatter, 8 ContextSections
+- 16 Design Principles in AKB
+- RuntimeManager now injects context before every adapter.run() call
