@@ -53,6 +53,27 @@ interface BrainData {
   currentFocus: { milestone: string; sprint: string; goal: string; startedAt: number; updatedAt: number };
 }
 
+interface FileStat {
+  path: string; absolutePath: string; isDirectory: boolean; isFile: boolean;
+  size: number; modifiedAt: number; createdAt: number;
+}
+interface DirectoryEntry {
+  name: string; path: string; isDirectory: boolean; isFile: boolean;
+}
+interface FileContent {
+  path: string; content: string; stat: FileStat; language?: string;
+}
+interface SearchMatch {
+  file: string; line: number; column: number; content: string; context: string;
+}
+interface SearchResult {
+  query: string; matches: SearchMatch[]; totalFiles: number; totalMatches: number;
+}
+interface GlobResult { pattern: string; matches: string[]; }
+interface SearchOptions {
+  maxResults?: number; includePattern?: string; excludePattern?: string; caseSensitive?: boolean;
+}
+
 // Preload API exposed via contextBridge
 interface Window {
   api: {
@@ -155,6 +176,15 @@ interface Window {
     };
     brain: {
       getData: () => Promise<BrainData>;
+    };
+    workspace: {
+      read: (path: string) => Promise<FileContent>;
+      write: (path: string, content: string) => Promise<void>;
+      list: (path: string) => Promise<DirectoryEntry[]>;
+      stat: (path: string) => Promise<FileStat>;
+      exists: (path: string) => Promise<boolean>;
+      glob: (pattern: string) => Promise<GlobResult>;
+      search: (query: string, opts?: SearchOptions) => Promise<SearchResult>;
     };
     config: {
       get: (key: string) => Promise<unknown>;

@@ -3,6 +3,7 @@ import { join } from "path";
 import { runtimeManager } from "./runtime/runtime-manager.js";
 import * as sessionStore from "./runtime/session-store.js";
 import { dashboardService } from "./dashboard/DashboardService.js";
+import { workspaceService } from "./workspace/WorkspaceService.js";
 import * as configStore from "./config-store.js";
 import type { AgentEvent } from "./runtime/types.js";
 
@@ -162,6 +163,38 @@ ipcMain.handle("project:get-info", () => {
 
 ipcMain.handle("brain:get-data", () => {
   return dashboardService.getBrainData();
+});
+
+// ============================================================
+// IPC: Workspace
+// ============================================================
+
+ipcMain.handle("workspace:read", (_event, path: string) => {
+  return workspaceService.readFile(path);
+});
+
+ipcMain.handle("workspace:write", (_event, path: string, content: string) => {
+  workspaceService.writeFile(path, content);
+});
+
+ipcMain.handle("workspace:list", (_event, path: string) => {
+  return workspaceService.listDirectory(path);
+});
+
+ipcMain.handle("workspace:stat", (_event, path: string) => {
+  return workspaceService.stat(path);
+});
+
+ipcMain.handle("workspace:exists", (_event, path: string) => {
+  return workspaceService.exists(path);
+});
+
+ipcMain.handle("workspace:glob", (_event, pattern: string) => {
+  return workspaceService.glob(pattern);
+});
+
+ipcMain.handle("workspace:search", (_event, query: string, opts?: unknown) => {
+  return workspaceService.searchText(query, opts as Parameters<typeof workspaceService.searchText>[1]);
 });
 
 // ============================================================
