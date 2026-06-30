@@ -71,8 +71,8 @@ export class BrainProvider {
       description: "AI-Native Development Environment for Human & AI Collaboration",
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      phase: "Phase 1 — Foundation",
-      version: "0.1.0",
+      phase: "Phase 3 — Workspace Intelligence",
+      version: "0.2.0",
     };
   }
 
@@ -106,9 +106,9 @@ export class BrainProvider {
 
   private defaultFocus(): BrainCurrentFocus {
     return {
-      milestone: "M8 — Workspace Context Injection",
-      sprint: "Context Injection",
-      goal: "Establish Context Injection as Runtime-Agnostic infrastructure for all AI agents",
+      milestone: "M11c — Command System Architecture Freeze",
+      sprint: "Command System",
+      goal: "Unify all interaction (UI, keyboard, AI, plugins) through a single Command abstraction",
       startedAt: Date.now(),
       updatedAt: Date.now(),
     };
