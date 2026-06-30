@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## 2026-06-30 — v0.2.0 (M11c.5)
+
+### Added
+
+**Command System Architecture Verification**:
+- `docs/command-system-review.md` — 8-section architecture review covering:
+  - Full action audit: 10 existing user actions traced to Command future (all low migration risk)
+  - Module responsibility matrix: 11 modules classified (Consume/Register/Execute/Ignore)
+  - Dependency cycle analysis: zero cycles, clean DAG across Registry/Executor/Workspace/Runtime/Renderer
+  - Plugin validation: external "Generate README" command without source changes
+  - AI agent validation: `workspace.openFile` flow with zero UI knowledge
+  - Future compatibility: 9 features validated (Ctrl+P, Ctrl+Shift+P, quick open, tool calling, workflows, plugins, batch)
+- `docs/command-migration-plan.md` — 37-item migration table mapping every existing button/menu/action to its future Command
+- Architecture verdict: **READY** — no corrections required before M11d implementation
+
 ## 2026-06-27 — v0.2.0
 
 ### Added

@@ -45,6 +45,7 @@ Phase 3 — Workspace Intelligence (v0.3.0)
 * [x] M11a: Metadata Index Foundation
 * [x] M11b: Metadata Search Provider
 * [x] M11c: Command System Architecture Freeze
+* [x] M11c.5: Command System Architecture Verification
 
 ---
 
