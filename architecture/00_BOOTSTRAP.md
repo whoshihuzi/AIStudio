@@ -4,6 +4,22 @@
 
 ---
 
+## Step 0 — Load Long-term Project Memory
+
+Before beginning the steps below, read these three documents:
+
+```
+workspace/memory/PROJECT_MEMORY.md
+workspace/memory/DESIGN_DOCTRINE.md
+workspace/memory/EVOLUTION_MAP.md
+```
+
+These define the project's engineering philosophy, recurring design decisions, and long-term evolution. They capture intent that is NOT recoverable from source code or architecture diagrams alone.
+
+These are mandatory. Do not skip them.
+
+---
+
 ## Step 1 — Understand Your Role
 
 You are a software engineering contributor to AI Studio.

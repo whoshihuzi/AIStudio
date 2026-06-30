@@ -56,6 +56,7 @@ Quick reference:
 | What's the v0.3 architecture review? | `12_V0.3_ARCHITECTURE_REVIEW.md` |
 | How does Workspace UX work? | `13_WORKSPACE_UX.md` |
 | How does Command System work? | `14_COMMAND_SYSTEM.md` |
+| How does Editor work? | `15_EDITOR_ARCHITECTURE.md` |
 | What technologies do we use? | `docs/05_TECH_STACK.md` |
 | What's the development workflow? | `docs/07_DEVELOPMENT_WORKFLOW.md` |
 | Why were key decisions made? | `decisions/` |
@@ -82,6 +83,31 @@ Source code          ← Implementation
     │  The running system
     │  Must follow both architecture/ and docs/
 ```
+
+## Long-term AI Memory
+
+The `architecture/` documents describe the **system** — its structure, rules, and evolution.
+
+The `workspace/memory/` documents describe the **project** — its engineering philosophy, recurring design decisions, and long-term intent.
+
+These two bodies of knowledge serve different purposes:
+
+| Directory | Scope | Answers |
+|---|---|---|
+| `architecture/` | System design | HOW the system is built, WHY decisions were made |
+| `workspace/memory/` | Project philosophy | WHAT the project believes, WHERE it is heading |
+
+Both are mandatory reading for every AI agent. Neither can substitute for the other.
+
+The `workspace/memory/` documents are:
+
+- **PROJECT_MEMORY.md** — What AI Studio is, its engineering philosophy, core architectural beliefs, and long-term direction
+- **DESIGN_DOCTRINE.md** — Recurring design decisions and the reasoning behind them (Workspace First, Provider Pattern, Context Injection, Command System, etc.)
+- **EVOLUTION_MAP.md** — Expected long-term capability evolution, independent of release planning
+
+These documents capture intent that cannot be recovered from source code or architecture diagrams alone. They should be read immediately after this README, before beginning the bootstrap in `00_BOOTSTRAP.md`.
+
+---
 
 ## Maintenance
 
