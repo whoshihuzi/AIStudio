@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## 2026-06-30 — v0.2.0 (M11d.1)
+
+### Added
+
+**Command Registry**:
+- `src/main/runtime/commands/CommandRegistry.ts` — in-memory Command metadata store
+  - Methods: register, unregister, get, has, list, listByCategory, search, clear
+  - Validation: rejects duplicate IDs, empty IDs, empty titles with descriptive errors
+  - Search: case-insensitive across title, description, keywords; sorted by title ASC
+  - Thread safety: private Map, immutable from Renderer, Main Process only
+- `src/main/runtime/commands/DefaultCommandRegistry.ts` — 10 default commands (metadata only)
+  - Commands: dashboard.open, dashboard.refresh, workspace.openFile, workspace.refreshIndex, workspace.search, session.open, session.new, runtime.runChecks, settings.language, preview.close
+  - No execute implementations — stub functions marked for replacement in M11d.2
+- `docs/command-registry-validation.md` — 9-section verification covering:
+  - Registration lifecycle, duplicate protection, empty ID/title protection
+  - Search correctness (case-insensitive, multi-field, sort order)
+  - Category listing, memory ownership, no-execution guarantee, architecture compliance
+
+---
 ## 2026-06-30 — v0.2.0 (M11c.5)
 
 ### Added

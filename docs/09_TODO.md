@@ -53,7 +53,8 @@ Phase 3 — Workspace Intelligence (v0.3.0)
 
 Phase 3 — Command System + Search UI (current)
 
-* [ ] M11d: Command Registry + Executor
+* [x] M11d.1: Command Registry (metadata only, no execute)
+* [ ] M11d.2: Command Executor
 * [ ] M11e: Command Palette UI (Ctrl+P)
 * [ ] M11f: Wire existing actions as Commands
 * [ ] M12: Code Manipulation Foundation (write audit, diff skeleton)
