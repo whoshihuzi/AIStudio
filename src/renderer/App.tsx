@@ -10,26 +10,33 @@ import { useEditorStore } from "@/stores/editor";
 export function App() {
   const [view, setView] = useState<"dashboard" | "chat">("dashboard");
   const previewVisible = useWorkspacePreviewStore((s) => s.visible);
-  const editorActive = useEditorStore((s) => s.activeFile !== null);
+  const editorVisible = useEditorStore((s) => s.isVisible);
 
-  // Panel slot: Editor takes priority. At most one panel is shown.
-  const panel = editorActive ? (
-    <div className="w-96 shrink-0 flex flex-col">
-      <EditorPanel />
-    </div>
-  ) : previewVisible ? (
-    <div className="w-96 shrink-0 flex flex-col">
-      <PreviewPanel />
-    </div>
-  ) : null;
+  // Preview and Editor are independent siblings. Never mutually exclusive.
+  // Each panel's visibility comes from its own Store.
+  // Neither panel may inspect the other's state.
+  const hasPanels = previewVisible || editorVisible;
 
   return (
     <div className="h-screen flex bg-gray-900">
       <Sidebar activeView={view} onNavigate={(v) => setView(v)} />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {view === "dashboard" ? <Dashboard /> : <ChatView />}
       </div>
-      {panel}
+      {hasPanels && (
+        <div className="w-96 shrink-0 flex flex-row">
+          {previewVisible && (
+            <div className="flex-1 min-w-0 flex flex-col">
+              <PreviewPanel />
+            </div>
+          )}
+          {editorVisible && (
+            <div className="flex-1 min-w-0 flex flex-col">
+              <EditorPanel />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
