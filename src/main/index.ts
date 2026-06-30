@@ -5,10 +5,12 @@ import * as sessionStore from "./runtime/session-store.js";
 import { dashboardService } from "./dashboard/DashboardService.js";
 import { workspaceService } from "./workspace/WorkspaceService.js";
 import { WorkspaceIndexStore } from "./workspace/WorkspaceIndexStore.js";
+import { SearchProvider } from "./workspace/SearchProvider.js";
 import * as configStore from "./config-store.js";
 import type { AgentEvent } from "./runtime/types.js";
 
 const workspaceIndexStore = new WorkspaceIndexStore(workspaceService);
+const searchProvider = new SearchProvider(workspaceIndexStore);
 
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 
@@ -222,6 +224,14 @@ ipcMain.handle("workspace:index:rebuild", () => {
 
 ipcMain.handle("workspace:index:stats", () => {
   return workspaceIndexStore.getStats();
+});
+
+// ============================================================
+// IPC: Search
+// ============================================================
+
+ipcMain.handle("workspace:search:name", (_event, query: string, limit?: number) => {
+  return searchProvider.findBySubstring(query, limit ?? 100);
 });
 
 // ============================================================
