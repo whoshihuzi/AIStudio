@@ -1,7 +1,11 @@
 import { ProcessAgentRuntime } from "./process-agent-runtime.js";
 import { HermesAdapter } from "./hermes-adapter.js";
 import { ContextBuilder } from "../context/ContextBuilder.js";
+import { workspaceService } from "../workspace/WorkspaceService.js";
+import { WorkspaceToolRegistry } from "./tools/WorkspaceToolRegistry.js";
+import { WorkspaceToolExecutor } from "./tools/WorkspaceToolExecutor.js";
 import type { AgentEvent } from "./types.js";
+import type { ToolResult } from "./tools/types.js";
 
 type AdapterId = "hermes";
 
@@ -15,6 +19,8 @@ const DEFAULT_CONTEXT_BUDGET = 4000;
 export class AgentRuntimeManager {
   private activeRuntime: ProcessAgentRuntime | null = null;
   private readonly contextBuilder = new ContextBuilder();
+  private readonly toolRegistry = new WorkspaceToolRegistry(workspaceService);
+  private readonly toolExecutor = new WorkspaceToolExecutor(this.toolRegistry);
 
   private getRuntime(adapter: AdapterId): ProcessAgentRuntime {
     if (!this.activeRuntime) {
@@ -64,6 +70,19 @@ export class AgentRuntimeManager {
 
   listAdapters(): Array<{ id: AdapterId; name: string }> {
     return [{ id: "hermes", name: "Hermes" }];
+  }
+
+  /**
+   * Execute a workspace tool directly (manual testing / future agent use).
+   * Not called automatically. No prompt parsing. No function calling.
+   */
+  async runTool(name: string, params: Record<string, unknown>): Promise<ToolResult> {
+    return this.toolExecutor.execute(name, params);
+  }
+
+  /** List available workspace tools. */
+  listTools(): string[] {
+    return this.toolRegistry.list();
   }
 }
 
