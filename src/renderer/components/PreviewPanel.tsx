@@ -9,8 +9,13 @@ export function PreviewPanel() {
   const file = useWorkspacePreviewStore((s) => s.file);
   const loading = useWorkspacePreviewStore((s) => s.loading);
   const error = useWorkspacePreviewStore((s) => s.error);
-  const close = useWorkspacePreviewStore((s) => s.close);
+  const closePreview = useWorkspacePreviewStore((s) => s.close);
   const refresh = useWorkspacePreviewStore((s) => s.refresh);
+
+  function handleClose() {
+    window.api.command.execute("preview.close");
+    closePreview();
+  }
 
   if (!file && !loading && !error) {
     return (
@@ -39,7 +44,7 @@ export function PreviewPanel() {
               ↻
             </button>
           )}
-          <button onClick={close} className="text-xs text-gray-500 hover:text-gray-300">
+          <button onClick={handleClose} className="text-xs text-gray-500 hover:text-gray-300">
             ✕
           </button>
         </div>

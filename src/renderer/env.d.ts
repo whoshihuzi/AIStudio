@@ -182,5 +182,13 @@ interface Window {
       set: (key: string, value: unknown) => Promise<void>;
       onLanguageChange: (callback: (locale: string) => void) => () => void;
     };
+    command: {
+      execute: (id: string, args?: Record<string, unknown>) => Promise<{
+        success: boolean;
+        commandId: string;
+        error?: string;
+        payload?: unknown;
+      }>;
+    };
   };
 }

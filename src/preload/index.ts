@@ -138,4 +138,9 @@ contextBridge.exposeInMainWorld("api", {
       };
     },
   },
+
+  command: {
+    execute: (id: string, args?: Record<string, unknown>): Promise<unknown> =>
+      ipcRenderer.invoke("command:execute", id, args),
+  },
 });

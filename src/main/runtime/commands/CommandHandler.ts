@@ -14,10 +14,12 @@ export interface CommandHandler {
   /**
    * Execute the handler's business logic.
    *
-   * The handler is responsible for filling in `commandId` on the
-   * returned result when it knows its own identity. When multiple
-   * command IDs share the same handler, the Executor overwrites
-   * `commandId` after execution to ensure accuracy.
+   * @param context — runtime context (current view, selected file, etc.)
+   * @param commandId — the command ID being executed, supplied by the
+   *   Executor so multi-command handlers can distinguish invocations.
+   *
+   * The Executor overwrites `commandId` on the returned result after
+   * execution to ensure accuracy, so handlers may return empty `commandId`.
    */
-  execute(context: CommandContext): Promise<CommandResult>;
+  execute(context: CommandContext, commandId: string): Promise<CommandResult>;
 }

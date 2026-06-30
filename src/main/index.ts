@@ -9,8 +9,29 @@ import { SearchProvider } from "./workspace/SearchProvider.js";
 import * as configStore from "./config-store.js";
 import type { AgentEvent } from "./runtime/types.js";
 
+// ── Command System ──
+import { CommandRegistry } from "./runtime/commands/CommandRegistry.js";
+import { CommandExecutor } from "./runtime/commands/CommandExecutor.js";
+import { registerDefaultCommands } from "./runtime/commands/DefaultCommandRegistry.js";
+import { DashboardHandler } from "./runtime/commands/handlers/DashboardHandler.js";
+import { WorkspaceHandler } from "./runtime/commands/handlers/WorkspaceHandler.js";
+import { PreviewHandler } from "./runtime/commands/handlers/PreviewHandler.js";
+import { RuntimeHandler } from "./runtime/commands/handlers/RuntimeHandler.js";
+import type { CommandContext } from "../shared/command/types.js";
+
 const workspaceIndexStore = new WorkspaceIndexStore(workspaceService);
 const searchProvider = new SearchProvider(workspaceIndexStore);
+
+// ── Command System bootstrap ──
+const commandRegistry = new CommandRegistry();
+registerDefaultCommands(commandRegistry);
+
+const commandExecutor = new CommandExecutor(commandRegistry);
+commandExecutor.registerHandler("dashboard.refresh", new DashboardHandler());
+commandExecutor.registerHandler("dashboard.open", new DashboardHandler());
+commandExecutor.registerHandler("workspace.refreshIndex", new WorkspaceHandler(workspaceIndexStore));
+commandExecutor.registerHandler("preview.close", new PreviewHandler());
+commandExecutor.registerHandler("runtime.runChecks", new RuntimeHandler());
 
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 
@@ -244,6 +265,23 @@ ipcMain.handle("config:get", (_event, key: string) => {
 
 ipcMain.handle("config:set", (_event, key: string, value: unknown) => {
   configStore.setConfig(key, value);
+});
+
+// ============================================================
+// IPC: Command System
+// ============================================================
+
+ipcMain.handle("command:execute", async (_event, commandId: string, args?: Record<string, unknown>) => {
+  const context: CommandContext = {
+    currentView: "dashboard", // default; may be overridden by UI in future
+  };
+  if (args?.selectedFile && typeof args.selectedFile === "string") {
+    context.selectedFile = args.selectedFile;
+  }
+  if (args?.activeSessionId && typeof args.activeSessionId === "string") {
+    context.activeSessionId = args.activeSessionId;
+  }
+  return commandExecutor.execute(commandId, context);
 });
 
 // ============================================================

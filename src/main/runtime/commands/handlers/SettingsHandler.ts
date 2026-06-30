@@ -8,7 +8,7 @@ import type { CommandContext, CommandResult } from "../../../../shared/command/t
 import type { CommandHandler } from "../CommandHandler.js";
 
 export class SettingsHandler implements CommandHandler {
-  async execute(_context: CommandContext): Promise<CommandResult> {
+  async execute(_context: CommandContext, _commandId: string): Promise<CommandResult> {
     return {
       success: false,
       commandId: "",

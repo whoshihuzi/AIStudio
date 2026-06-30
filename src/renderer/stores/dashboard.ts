@@ -52,12 +52,22 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   refresh: async () => {
     set({ loading: true, activity: "refreshing", error: null });
     try {
-      const [data, projectInfo, brainData] = await Promise.all([
-        window.api.dashboard.getData(),
-        window.api.project.getInfo(),
-        window.api.brain.getData(),
-      ]);
-      set({ data, projectInfo, brainData, loading: false, activity: "idle" });
+      const result = await window.api.command.execute("dashboard.refresh");
+      if (!result.success) {
+        throw new Error(result.error ?? "Unknown error");
+      }
+      const payload = result.payload as {
+        data: DashboardRawData;
+        projectInfo: ProjectInfo;
+        brainData: BrainData;
+      };
+      set({
+        data: payload.data,
+        projectInfo: payload.projectInfo,
+        brainData: payload.brainData,
+        loading: false,
+        activity: "idle",
+      });
     } catch (err) {
       set({ error: String(err), loading: false, activity: "idle" });
     }
@@ -66,11 +76,15 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   refreshBuild: async () => {
     set({ build: { typecheck: "unknown", build: "unknown" }, activity: "running-checks" });
     try {
-      const result = await window.api.dashboard.runChecks();
+      const result = await window.api.command.execute("runtime.runChecks");
+      if (!result.success) {
+        throw new Error(result.error ?? "Unknown error");
+      }
+      const payload = result.payload as { typecheck: string; build: string };
       set({
         build: {
-          typecheck: result.typecheck as "pass" | "fail",
-          build: result.build as "pass" | "fail",
+          typecheck: payload.typecheck as "pass" | "fail",
+          build: payload.build as "pass" | "fail",
         },
         activity: "idle",
       });

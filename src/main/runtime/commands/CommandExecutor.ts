@@ -127,7 +127,7 @@ export class CommandExecutor {
 
     // ── Step 4: Dispatch to handler ──
     try {
-      const result = await handler.execute(context);
+      const result = await handler.execute(context, commandId);
       // Ensure commandId is always correct, even if the handler
       // doesn't set it or sets it to a different value.
       return { ...result, commandId };
