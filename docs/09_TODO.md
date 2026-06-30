@@ -2,86 +2,73 @@
 
 Current Phase:
 
-Phase 1
+Phase 3 — Workspace Intelligence
 
 ---
 
 # Sprint 1
 
-Project Initialization
+Phase 1 — Foundation (v0.1.0)
 
-* [ ] Create Electron project
-* [ ] Configure React
-* [ ] Configure TypeScript
-* [ ] Configure Tailwind
-* [ ] Project starts successfully
+* [x] M1: Create Electron project
+* [x] M2: React + TypeScript + Tailwind
+* [x] M3: Application Shell + Chat layout
+* [x] M4: ProcessAgentRuntime + Hermes adapter
+* [x] M5: Conversation Rendering (6 MessagePart types)
 
 ---
 
 # Sprint 2
 
-Application Shell
+Phase 2 — Dashboard + Brain (v0.2.0)
 
-* [ ] Main window
-
-* [ ] Basic layout
-
-* [ ] Sidebar
-
-* [ ] Chat area
-
-* [ ] Console area
+* [x] M6: Dashboard — 3-question layout, i18n, Workspace Identity
+* [x] M7: Project Brain v1 — 4 brain files, BrainProvider
+* [x] M8: Context Injection — ContextBuilder pipeline
 
 ---
 
 # Sprint 3
 
-Hermes Integration
+Phase 3 — Workspace Intelligence (v0.3.0)
 
-* [ ] Agent Interface
-
-* [ ] Hermes Adapter
-
-* [ ] Streaming Output
+* [x] M9a: Workspace Provider skeleton
+* [x] M9b: Workspace Root + Path Resolution
+* [x] M9.5: Shared Resource Model
+* [x] M10a: Workspace Explorer tree
+* [x] M10b: File preview (read-only)
+* [x] M10.5: Design System Foundation
+* [x] M10.8a: Workspace UX architecture freeze
+* [x] M10.8b: Move Preview to App Root
+* [x] M10.9: Workspace operations (write/rename/mkdir/delete/copy/move)
+* [x] M10.95: Workspace Tool Runtime Foundation
+* [x] M11a: Metadata Index Foundation
+* [x] M11b: Metadata Search Provider
+* [x] M11c: Command System Architecture Freeze
 
 ---
 
 # Sprint 4
 
-Workspace
+Phase 3 — Command System + Search UI (current)
 
-* [x] File tree
-* [x] Folder selection
-* [x] Auto refresh
+* [ ] M11d: Command Registry + Executor
+* [ ] M11e: Command Palette UI (Ctrl+P)
+* [ ] M11f: Wire existing actions as Commands
+* [ ] M12: Code Manipulation Foundation (write audit, diff skeleton)
 
 ---
 
 # Sprint 5
 
-Conversation
+Phase 3 — Remaining
 
-* [ ] Session
-
-* [ ] History
-
-* [ ] Save
-
-* [ ] Restore
-
----
-
-# Sprint 6
-
-Diff
-
-* [ ] Accept
-
-* [ ] Reject
-
-* [ ] Preview
+* [ ] M12: Diff View
+* [ ] M12: Accept / Reject
+* [ ] M12: Patch application
 
 ---
 
 # Sprint Goal
 
-Replace PowerShell for daily Hermes usage.
+Replace PowerShell for daily Hermes usage — then surpass it.
