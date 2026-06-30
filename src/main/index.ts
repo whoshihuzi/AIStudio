@@ -4,8 +4,11 @@ import { runtimeManager } from "./runtime/runtime-manager.js";
 import * as sessionStore from "./runtime/session-store.js";
 import { dashboardService } from "./dashboard/DashboardService.js";
 import { workspaceService } from "./workspace/WorkspaceService.js";
+import { WorkspaceIndexStore } from "./workspace/WorkspaceIndexStore.js";
 import * as configStore from "./config-store.js";
 import type { AgentEvent } from "./runtime/types.js";
+
+const workspaceIndexStore = new WorkspaceIndexStore(workspaceService);
 
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 
@@ -207,6 +210,18 @@ ipcMain.handle("workspace:copy", (_event, from: string, to: string) => {
 
 ipcMain.handle("workspace:move", (_event, from: string, to: string) => {
   workspaceService.move(from, to);
+});
+
+// ============================================================
+// IPC: Workspace Index
+// ============================================================
+
+ipcMain.handle("workspace:index:rebuild", () => {
+  return workspaceIndexStore.rebuild();
+});
+
+ipcMain.handle("workspace:index:stats", () => {
+  return workspaceIndexStore.getStats();
 });
 
 // ============================================================
