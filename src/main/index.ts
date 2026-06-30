@@ -185,6 +185,30 @@ ipcMain.handle("workspace:exists", (_event, path: string) => {
   return workspaceService.exists(path);
 });
 
+ipcMain.handle("workspace:write", (_event, path: string, content: string) => {
+  workspaceService.writeFile(path, content);
+});
+
+ipcMain.handle("workspace:rename", (_event, from: string, to: string) => {
+  workspaceService.rename(from, to);
+});
+
+ipcMain.handle("workspace:mkdir", (_event, path: string) => {
+  workspaceService.mkdir(path);
+});
+
+ipcMain.handle("workspace:delete", (_event, path: string) => {
+  workspaceService.delete(path);
+});
+
+ipcMain.handle("workspace:copy", (_event, from: string, to: string) => {
+  workspaceService.copy(from, to);
+});
+
+ipcMain.handle("workspace:move", (_event, from: string, to: string) => {
+  workspaceService.move(from, to);
+});
+
 // ============================================================
 // IPC: Config
 // ============================================================

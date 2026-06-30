@@ -64,25 +64,23 @@ export interface SearchOptions {
 // ----------------------------------------------------------
 
 export interface IWorkspaceProvider {
-  /** Read file content (internal). Use readFileNode for shared model. */
   readFile(path: string): FileContent;
   writeFile(path: string, content: string): void;
   exists(path: string): boolean;
-  /** Internal stat. Use statNode for shared model. */
   stat(path: string): FileStat;
-  /** Internal list. Use listNodes for shared model. */
   listDirectory(path: string): DirectoryEntry[];
   glob(pattern: string): GlobResult;
   searchText(query: string, options?: SearchOptions): SearchResult;
 
-  // ----------------------------------------------------------
-  // Shared Resource Model methods
-  // ----------------------------------------------------------
+  // File operations
+  rename(from: string, to: string): void;
+  mkdir(path: string): void;
+  delete(path: string): void;
+  copy(from: string, to: string): void;
+  move(from: string, to: string): void;
 
-  /** List directory as shared WorkspaceNode[]. */
+  // Shared Resource Model methods
   listNodes(path: string): WorkspaceNode[];
-  /** Stat as shared FileNode. */
   statNode(path: string): FileNode;
-  /** Read file as shared FileNode with content. */
   readFileNode(path: string): { node: FileNode; content: string };
 }

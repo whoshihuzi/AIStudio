@@ -31,6 +31,13 @@ export class WorkspaceService implements IWorkspaceProvider {
   listNodes(path: string): WorkspaceNode[] { return this.provider.listNodes(path); }
   statNode(path: string): FileNode { return this.provider.statNode(path); }
   readFileNode(path: string): { node: FileNode; content: string } { return this.provider.readFileNode(path); }
+
+  // File operations
+  rename(from: string, to: string): void { this.provider.rename(from, to); }
+  mkdir(path: string): void { this.provider.mkdir(path); }
+  delete(path: string): void { this.provider.delete(path); }
+  copy(from: string, to: string): void { this.provider.copy(from, to); }
+  move(from: string, to: string): void { this.provider.move(from, to); }
 }
 
 export { rootProvider, pathResolver };

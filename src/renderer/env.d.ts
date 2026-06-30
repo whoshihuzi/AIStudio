@@ -170,6 +170,12 @@ interface Window {
       stat: (path: string) => Promise<FileNode>;
       read: (path: string) => Promise<{ node: FileNode; content: string }>;
       exists: (path: string) => Promise<boolean>;
+      write: (path: string, content: string) => Promise<void>;
+      rename: (from: string, to: string) => Promise<void>;
+      mkdir: (path: string) => Promise<void>;
+      delete: (path: string) => Promise<void>;
+      copy: (from: string, to: string) => Promise<void>;
+      move: (from: string, to: string) => Promise<void>;
     };
     config: {
       get: (key: string) => Promise<unknown>;

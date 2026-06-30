@@ -110,6 +110,18 @@ contextBridge.exposeInMainWorld("api", {
       ipcRenderer.invoke("workspace:read", path),
     exists: (path: string): Promise<boolean> =>
       ipcRenderer.invoke("workspace:exists", path),
+    write: (path: string, content: string): Promise<void> =>
+      ipcRenderer.invoke("workspace:write", path, content),
+    rename: (from: string, to: string): Promise<void> =>
+      ipcRenderer.invoke("workspace:rename", from, to),
+    mkdir: (path: string): Promise<void> =>
+      ipcRenderer.invoke("workspace:mkdir", path),
+    delete: (path: string): Promise<void> =>
+      ipcRenderer.invoke("workspace:delete", path),
+    copy: (from: string, to: string): Promise<void> =>
+      ipcRenderer.invoke("workspace:copy", from, to),
+    move: (from: string, to: string): Promise<void> =>
+      ipcRenderer.invoke("workspace:move", from, to),
   },
 
   config: {

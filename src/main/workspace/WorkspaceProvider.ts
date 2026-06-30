@@ -5,7 +5,7 @@
 // types via WorkspaceMapper.
 // ============================================================
 
-import { readFileSync, readdirSync, statSync, existsSync, type Stats } from "fs";
+import { readFileSync, readdirSync, statSync, existsSync, writeFileSync, renameSync, mkdirSync, rmSync, cpSync, type Stats } from "fs";
 import { WorkspaceRootProvider } from "./WorkspaceRootProvider.js";
 import { PathResolver } from "./PathResolver.js";
 import { WorkspaceMapper } from "./WorkspaceMapper.js";
@@ -76,11 +76,31 @@ export class WorkspaceProvider implements IWorkspaceProvider {
   }
 
   // ----------------------------------------------------------
-  // Stubs
+  // File operations
   // ----------------------------------------------------------
 
-  writeFile(_path: string, _content: string): void {
-    throw new Error("WorkspaceProvider.writeFile: not implemented");
+  writeFile(relPath: string, content: string): void {
+    writeFileSync(this.paths.resolveWorkspacePath(relPath), content, "utf-8");
+  }
+
+  rename(from: string, to: string): void {
+    renameSync(this.paths.resolveWorkspacePath(from), this.paths.resolveWorkspacePath(to));
+  }
+
+  mkdir(relPath: string): void {
+    mkdirSync(this.paths.resolveWorkspacePath(relPath), { recursive: true });
+  }
+
+  delete(relPath: string): void {
+    rmSync(this.paths.resolveWorkspacePath(relPath), { recursive: true, force: true });
+  }
+
+  copy(from: string, to: string): void {
+    cpSync(this.paths.resolveWorkspacePath(from), this.paths.resolveWorkspacePath(to), { recursive: true });
+  }
+
+  move(from: string, to: string): void {
+    this.rename(from, to);
   }
 
   glob(_pattern: string): GlobResult {
