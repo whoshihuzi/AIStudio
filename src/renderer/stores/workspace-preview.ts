@@ -15,6 +15,7 @@ export interface PreviewFile {
 
 export interface WorkspacePreviewState {
   file: PreviewFile | null;
+  visible: boolean;
   loading: boolean;
   error: string | null;
 
@@ -25,11 +26,12 @@ export interface WorkspacePreviewState {
 
 export const useWorkspacePreviewStore = create<WorkspacePreviewState>((set, get) => ({
   file: null,
+  visible: false,
   loading: false,
   error: null,
 
   open: async (path: string) => {
-    set({ loading: true, error: null, file: null });
+    set({ loading: true, error: null, visible: true, file: null });
     try {
       const raw = await window.api.workspace.read(path);
       const data = raw as { node: { path: string; name: string; size: number; modifiedAt: number }; content: string };
@@ -48,7 +50,7 @@ export const useWorkspacePreviewStore = create<WorkspacePreviewState>((set, get)
     }
   },
 
-  close: () => set({ file: null, error: null }),
+  close: () => set({ file: null, visible: false, error: null }),
 
   refresh: async () => {
     const { file } = get();
