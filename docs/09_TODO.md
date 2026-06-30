@@ -55,6 +55,8 @@ Phase 3 — Command System + Search UI (current)
 
 * [x] M11d.1: Command Registry (metadata only, no execute)
 * [x] M11d.2: Command Executor
+* [x] M12a: Editor Architecture Freeze (documentation only)
+* [x] M12b: Editor Skeleton (EditorPanel, EditorStore, EmptyEditor, EditorToolbar)
 * [ ] M11e: Command Palette UI (Ctrl+P)
 * [ ] M11f: Wire existing actions as Commands
 * [ ] M12: Code Manipulation Foundation (write audit, diff skeleton)
