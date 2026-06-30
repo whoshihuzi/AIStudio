@@ -213,6 +213,21 @@ Presentation → Application → Domain ← Infrastructure
 
 ---
 
+## 18. Interaction through Commands
+
+**All user and AI actions are Commands.**
+
+- `CommandDefinition` is the single abstraction for every executable action
+- Dashboard actions, Workspace Explorer clicks, Chat messages, keyboard shortcuts — all registered as Commands
+- SearchProvider produces Commands, WorkspaceExplorer selects Commands, AI agents invoke Commands
+- CommandRegistry and CommandExecutor are separate: one owns metadata, one owns execution
+- Plugins add Commands via `registry.register()` — no special plugin API
+- Ctrl+P / Command Palette queries the Registry — no ad-hoc shortcuts
+- Adding a new action requires only: define CommandDefinition → register → done
+- Never mix UI rendering with Command execution
+
+---
+
 ## Violation Response
 
 If you find code that violates these principles:
