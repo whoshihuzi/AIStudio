@@ -13,10 +13,17 @@ interface MessageListProps {
 
 export function MessageList({ messages }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const prevLen = useRef(messages.length);
 
-  // Auto-scroll to the latest message (instant to avoid jitter during streaming)
+  // Auto-scroll to bottom only when NEW messages arrive (streaming).
+  // Does NOT scroll on initial load or session switch.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "auto" });
+    const grew = messages.length > prevLen.current;
+    prevLen.current = messages.length;
+    if (grew && bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "auto" });
+    }
   }, [messages]);
 
   if (messages.length === 0) {
@@ -28,7 +35,7 @@ export function MessageList({ messages }: MessageListProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+    <div ref={containerRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
       {messages.map((msg) => (
         <MessageBubble key={msg.id} message={msg} />
       ))}
