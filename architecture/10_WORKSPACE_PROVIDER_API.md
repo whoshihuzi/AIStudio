@@ -1,6 +1,7 @@
 # 10 — WorkspaceProvider API & IPC
 
-**Interface definitions only. No implementation.**
+**Interface definitions. Implemented in v0.3.0 (M9-M10).**
+**Last synced: 2026-07-01 — matches `src/main/workspace/WorkspaceProvider.ts` + `src/preload/index.ts`**
 
 ---
 
@@ -65,19 +66,23 @@ export interface IWorkspaceProvider {
   // File operations
   readFile(path: string): FileContent;
   writeFile(path: string, content: string): void;
-  createFile(path: string): FileContent;
-  createDirectory(path: string): void;
-  delete(path: string): void;
-  rename(from: string, to: string): void;
-
-  // Query operations
   exists(path: string): boolean;
   stat(path: string): FileStat;
   listDirectory(path: string): DirectoryEntry[];
-  glob(pattern: string): GlobResult;
+  rename(from: string, to: string): void;
+  mkdir(path: string): void;
+  delete(path: string): void;
+  copy(from: string, to: string): void;
+  move(from: string, to: string): void;
 
-  // Search operations (skeleton in M9, implementation in M11)
-  searchText(query: string, options?: SearchOptions): SearchResult;
+  // Shared Resource Model methods (for IPC → Renderer)
+  listNodes(path: string): WorkspaceNode[];
+  statNode(path: string): FileNode;
+  readFileNode(path: string): { node: FileNode; content: string };
+
+  // Query operations (stubs — not yet implemented)
+  glob(pattern: string): GlobResult;             // throws "not implemented"
+  searchText(query: string, options?: SearchOptions): SearchResult; // throws "not implemented"
 }
 
 export interface SearchOptions {
@@ -90,7 +95,7 @@ export interface SearchOptions {
 
 ---
 
-## IPC Channels
+## IPC Channels (actual — `src/preload/index.ts`)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -100,51 +105,45 @@ export interface SearchOptions {
 │ workspace:write      R→M          path,content   void      │
 │ workspace:list       R→M          path:string    Entry[]   │
 │ workspace:stat       R→M          path:string    FileStat  │
-│ workspace:glob       R→M          pattern:string GlobResult│
-│ workspace:search     R→M          query,opts     SearchRes │
-│ workspace:createFile R→M          path:string    FileContent│
-│ workspace:createDir  R→M          path:string    void      │
-│ workspace:delete     R→M          path:string    void      │
-│ workspace:rename     R→M          from,to:string void      │
 │ workspace:exists     R→M          path:string    boolean   │
+│ workspace:rename     R→M          from,to:string void      │
+│ workspace:mkdir      R→M          path:string    void      │
+│ workspace:delete     R→M          path:string    void      │
+│ workspace:copy       R→M          from,to:string void      │
+│ workspace:move       R→M          from,to:string void      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### IPC Type Definitions
+**Not yet exposed** (throws "not implemented"):
+- `workspace:search` — `WorkspaceProvider.searchText()` is a stub (deferred to v0.4+)
+- `workspace:glob` — `WorkspaceProvider.glob()` is a stub (deferred to v0.4+)
+
+**Differences from original design:**
+- `createFile` / `createDir` → replaced by single `mkdir` (handles dirs; file creation via `write` to non-existent path)
+- `copy` / `move` added beyond original spec
+
+### IPC Type Definitions (example — actual handlers in `src/main/index.ts`)
 
 ```typescript
-// Main process handlers
-ipcMain.handle("workspace:read", async (_e, path: string): Promise<FileContent> => {
-  return workspaceProvider.readFile(path);
-});
-
-ipcMain.handle("workspace:list", async (_e, path: string): Promise<DirectoryEntry[]> => {
-  return workspaceProvider.listDirectory(path);
-});
-
-ipcMain.handle("workspace:stat", async (_e, path: string): Promise<FileStat> => {
-  return workspaceProvider.stat(path);
-});
-
-ipcMain.handle("workspace:search", async (_e, query: string, opts?: SearchOptions): Promise<SearchResult> => {
-  return workspaceProvider.searchText(query, opts);
-});
-
-// ... etc for write, glob, createFile, createDir, delete, rename, exists
+// Main process — command:execute dispatches to handlers
+// No direct ipcMain.handle("workspace:read") —
+// operations go through command:execute → WorkspaceHandler → WorkspaceService → WorkspaceProvider
 ```
 
-### Preload Bridge
+### Preload Bridge (actual — `src/preload/index.ts`)
 
 ```typescript
-// src/preload/index.ts (additions)
 workspace: {
-  read: (path: string): Promise<FileContent> =>
-    ipcRenderer.invoke("workspace:read", path),
-  list: (path: string): Promise<DirectoryEntry[]> =>
-    ipcRenderer.invoke("workspace:list", path),
-  search: (query: string, opts?: SearchOptions): Promise<SearchResult> =>
-    ipcRenderer.invoke("workspace:search", query, opts),
-  // ...
+  list: (path: string) => ipcRenderer.invoke("workspace:list", path),
+  stat: (path: string) => ipcRenderer.invoke("workspace:stat", path),
+  read: (path: string) => ipcRenderer.invoke("workspace:read", path),
+  exists: (path: string) => ipcRenderer.invoke("workspace:exists", path),
+  write: (path, content) => ipcRenderer.invoke("workspace:write", path, content),
+  rename: (from, to) => ipcRenderer.invoke("workspace:rename", from, to),
+  mkdir: (path) => ipcRenderer.invoke("workspace:mkdir", path),
+  delete: (path) => ipcRenderer.invoke("workspace:delete", path),
+  copy: (from, to) => ipcRenderer.invoke("workspace:copy", from, to),
+  move: (from, to) => ipcRenderer.invoke("workspace:move", from, to),
 }
 ```
 
@@ -158,7 +157,7 @@ workspace: {
 
 3. **No binary files**: `workspace:read` returns only text content. Binary files return `{ content: "[binary]", stat, language: null }`.
 
-4. **Write audit**: `workspace:write` logs the change to `workspace/.history/` for undo support (future M12).
+4. **Write audit**: `workspace:write` (and `mkdir`, `delete`, `copy`) records changes to an in-memory `WriteAuditTrail` (circular buffer, 1000 entries). Exposed via `WorkspaceService.getAuditTrail()` for future undo support. Audit entries record path, operation type (create/update/delete), and byte count. (Originally planned as filesystem log to `workspace/.history/`; re-implemented as in-memory buffer in M12.)
 
 ---
 

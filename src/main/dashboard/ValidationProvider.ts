@@ -5,19 +5,23 @@
 //
 // Never uses GitProvider or TodoProvider internally — this is
 // an EXTERNAL validator that confirms the Providers are correct.
+//
+// M12.6.6: migrated from DashboardRawData to ProjectState.
+// DashboardRawData is deprecated and only kept for backward
+// compatibility with getData().
 // ============================================================
 
 import { execSync } from "child_process";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
-import type { DashboardRawData, ValidationReport, ValidationEntry, ValidationStatus } from "./types.js";
+import type { ProjectState, ValidationReport, ValidationEntry, ValidationStatus } from "./types.js";
 
 export class ValidationProvider {
   // ----------------------------------------------------------
-  // Validate entire DashboardRawData
+  // Validate entire ProjectState
   // ----------------------------------------------------------
 
-  validate(data: DashboardRawData): ValidationReport {
+  validate(data: ProjectState): ValidationReport {
     const entries: ValidationEntry[] = [];
 
     // --- Working Tree ---
@@ -56,7 +60,7 @@ export class ValidationProvider {
   // Working Tree
   // ----------------------------------------------------------
 
-  private validateWorkingTree(data: DashboardRawData): ValidationEntry[] {
+  private validateWorkingTree(data: ProjectState): ValidationEntry[] {
     const entries: ValidationEntry[] = [];
     const wt = data.workingTree;
 
@@ -97,7 +101,7 @@ export class ValidationProvider {
   // Git identity: branch + HEAD
   // ----------------------------------------------------------
 
-  private validateGitIdentity(data: DashboardRawData): ValidationEntry[] {
+  private validateGitIdentity(data: ProjectState): ValidationEntry[] {
     const entries: ValidationEntry[] = [];
     const m = data.milestone;
     if (!m) return [this.warnEntry("milestone", "null", "no git identity to check")];
@@ -129,7 +133,7 @@ export class ValidationProvider {
   // Baseline: tag + commits since
   // ----------------------------------------------------------
 
-  private validateBaseline(data: DashboardRawData): ValidationEntry[] {
+  private validateBaseline(data: ProjectState): ValidationEntry[] {
     const entries: ValidationEntry[] = [];
     const m = data.milestone;
     if (!m) return [];
@@ -167,7 +171,7 @@ export class ValidationProvider {
   // Recent commits count
   // ----------------------------------------------------------
 
-  private validateRecentCommits(data: DashboardRawData): ValidationEntry[] {
+  private validateRecentCommits(data: ProjectState): ValidationEntry[] {
     const entries: ValidationEntry[] = [];
     const rc = data.recent;
     if (!rc) return [this.warnEntry("recent", "null", "expected object")];
@@ -203,7 +207,7 @@ export class ValidationProvider {
   // Milestone: Sprint structure from TODO.md
   // ----------------------------------------------------------
 
-  private validateMilestone(data: DashboardRawData): ValidationEntry[] {
+  private validateMilestone(data: ProjectState): ValidationEntry[] {
     const entries: ValidationEntry[] = [];
     const m = data.milestone;
     if (!m) return [this.warnEntry("milestone", "null", "TODO.md may not exist")];
@@ -215,13 +219,6 @@ export class ValidationProvider {
 
     try {
       const text = readFileSync(todoPath, "utf-8");
-      const sprintRegex = /# Sprint (\d+)/g;
-      const realSprintCount = [...text.matchAll(sprintRegex)].length;
-
-      entries.push(this.check(
-        "milestone.totalSprints", m.totalSprints === realSprintCount,
-        String(realSprintCount), String(m.totalSprints),
-      ));
 
       // Verify phase extraction
       const phaseMatch = text.match(/Phase (\d+)/);
@@ -231,16 +228,22 @@ export class ValidationProvider {
         realPhase || "not found", m.phase,
       ));
 
-      // Verify currentSprint is within bounds
-      if (m.currentSprint < 1 || m.currentSprint > m.totalSprints) {
-        entries.push(this.failEntry(
-          "milestone.currentSprint",
-          `out of range (1-${m.totalSprints})`,
-          String(m.currentSprint),
+      // Verify currentMilestone exists in TODO.md
+      if (m.currentMilestone && m.currentMilestone !== "—") {
+        const milestoneExists = text.includes(m.currentMilestone);
+        entries.push(this.check(
+          "milestone.currentMilestone", milestoneExists,
+          `"${m.currentMilestone}" found in TODO.md`, m.currentMilestone,
         ));
-      } else {
-        entries.push(this.passEntry("milestone.currentSprint", String(m.currentSprint)));
       }
+
+      // Verify milestone tasks count
+      const taskCountInFile = [...text.matchAll(/\* \[[ x]\] M\d+/g)].length;
+      entries.push(this.check(
+        "milestone.milestoneTasks", m.milestoneTasks.length > 0 || taskCountInFile === 0,
+        m.milestoneTasks.length > 0 ? "tasks parsed" : "no tasks in TODO.md",
+        String(m.milestoneTasks.length),
+      ));
     } catch (err) {
       entries.push(this.warnEntry("milestone", "TODO.md read failed", String(err)));
     }
@@ -252,7 +255,7 @@ export class ValidationProvider {
   // Next Actions: must come from TODO.md, not hardcoded
   // ----------------------------------------------------------
 
-  private validateNextActions(data: DashboardRawData): ValidationEntry[] {
+  private validateNextActions(data: ProjectState): ValidationEntry[] {
     const entries: ValidationEntry[] = [];
     const actions = data.nextActions;
 

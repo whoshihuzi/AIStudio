@@ -11,7 +11,8 @@ import { useLanguage } from "@/i18n/LanguageProvider";
 export function DashboardHeader() {
   const { t } = useTranslation();
   const { locale } = useLanguage();
-  const info = useDashboardStore((s) => s.projectInfo);
+  const projectState = useDashboardStore((s) => s.projectState);
+  const info = projectState?.project;
   const activity = useDashboardStore((s) => s.activity);
   const refresh = useDashboardStore((s) => s.refresh);
 

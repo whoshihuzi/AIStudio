@@ -1,21 +1,21 @@
 // ============================================================
 // DefaultCommandRegistry — registers the initial Command set.
 //
-// Metadata only — no execute implementations (that comes in M11d.2).
-// Called once at application startup.
+// Commands are registered as metadata-only stubs (alwaysEnabled, noopExecute).
+// The CommandExecutor replaces stubs with real handler-backed execution at startup.
 // ============================================================
 
 import { CommandRegistry } from "./CommandRegistry.js";
 import type { CommandDefinition } from "../../../shared/command/types.js";
 
 // ----------------------------------------------------------
-// Stub helpers — replaced by the Executor in M11d.2
+// Registry stubs — replaced by CommandExecutor at registration time.
 // ----------------------------------------------------------
 
-/** Stub: always enabled. Replaced when Executor wires real context checks. */
+/** Stub: always enabled. Replaced by CommandExecutor with context-aware checks. */
 const alwaysEnabled = () => true;
 
-/** Stub: no-op. Replaced when Executor wires real implementations. */
+/** Stub: no-op. Replaced by CommandExecutor with handler-backed execution. */
 const noopExecute = () => {};
 
 function stub(fields: Omit<CommandDefinition, "enabled" | "execute">): CommandDefinition {
@@ -56,7 +56,6 @@ const defaultCommands: Omit<CommandDefinition, "enabled" | "execute">[] = [
     description: "Open a workspace file in the Preview Panel.",
     category: "workspace",
     keywords: ["open", "file", "workspace", "preview", "editor"],
-    shortcut: "Ctrl+P",
   },
   {
     id: "workspace.refreshIndex",
@@ -119,6 +118,69 @@ const defaultCommands: Omit<CommandDefinition, "enabled" | "execute">[] = [
     category: "workspace",
     keywords: ["close", "preview", "panel", "hide", "dismiss"],
     shortcut: "Escape",
+  },
+
+  // ── Document (lifecycle only — no content operations) ──
+  {
+    id: "document.ensure",
+    title: "Ensure Document",
+    description: "Validate that a document exists in the workspace. Does not read file content.",
+    category: "workspace",
+    keywords: ["document", "ensure", "exists", "validate"],
+  },
+  {
+    id: "document.activate",
+    title: "Activate Document",
+    description: "Set a document as the active (focused) document.",
+    category: "workspace",
+    keywords: ["document", "activate", "focus", "open"],
+  },
+  {
+    id: "document.reveal",
+    title: "Reveal in File Manager",
+    description: "Show the document in the system file manager.",
+    category: "navigation",
+    keywords: ["reveal", "finder", "explorer", "show", "file"],
+  },
+  {
+    id: "document.close",
+    title: "Close Document",
+    description: "Close an open document. Unsaved changes are handled by EditorStore independently.",
+    category: "workspace",
+    keywords: ["document", "close", "dismiss"],
+    shortcut: "Ctrl+W",
+  },
+
+  // ── Editor ──
+  {
+    id: "editor.open",
+    title: "Open in Editor",
+    description: "Open a file in the Editor for modification. Loads content from disk.",
+    category: "workspace",
+    keywords: ["editor", "open", "edit", "file"],
+    shortcut: "Ctrl+O",
+  },
+  {
+    id: "editor.save",
+    title: "Save File",
+    description: "Save the current editor buffer to disk through the single write gate.",
+    category: "workspace",
+    keywords: ["editor", "save", "write", "file"],
+    shortcut: "Ctrl+S",
+  },
+  {
+    id: "editor.diff",
+    title: "Show Diff",
+    description: "Compare current editor content with the disk version.",
+    category: "workspace",
+    keywords: ["editor", "diff", "compare", "changes"],
+  },
+  {
+    id: "editor.apply-patch",
+    title: "Apply Patch",
+    description: "Apply a unified diff patch to a file — parses @@ headers and applies context/add/remove lines.",
+    category: "workspace",
+    keywords: ["editor", "patch", "apply", "diff"],
   },
 ];
 

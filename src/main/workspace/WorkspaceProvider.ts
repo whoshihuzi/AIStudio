@@ -14,6 +14,7 @@ import type {
   DirectoryEntry, SearchResult, GlobResult, SearchOptions,
 } from "./types.js";
 import type { WorkspaceNode, FileNode } from "../../shared/workspace/types.js";
+import type { WriteAuditTrail } from "./WriteAuditTrail.js";
 
 export class WorkspaceProvider implements IWorkspaceProvider {
   private readonly mapper = new WorkspaceMapper();
@@ -21,6 +22,7 @@ export class WorkspaceProvider implements IWorkspaceProvider {
   constructor(
     private readonly root: WorkspaceRootProvider,
     private readonly paths: PathResolver,
+    private readonly auditTrail?: WriteAuditTrail,
   ) {}
 
   // ----------------------------------------------------------
@@ -80,7 +82,14 @@ export class WorkspaceProvider implements IWorkspaceProvider {
   // ----------------------------------------------------------
 
   writeFile(relPath: string, content: string): void {
-    writeFileSync(this.paths.resolveWorkspacePath(relPath), content, "utf-8");
+    const abs = this.paths.resolveWorkspacePath(relPath);
+    const existed = existsSync(abs);
+    writeFileSync(abs, content, "utf-8");
+    this.auditTrail?.record(
+      relPath,
+      existed ? "update" : "create",
+      content.length,
+    );
   }
 
   rename(from: string, to: string): void {
@@ -89,14 +98,17 @@ export class WorkspaceProvider implements IWorkspaceProvider {
 
   mkdir(relPath: string): void {
     mkdirSync(this.paths.resolveWorkspacePath(relPath), { recursive: true });
+    this.auditTrail?.record(relPath, "create", 0);
   }
 
   delete(relPath: string): void {
     rmSync(this.paths.resolveWorkspacePath(relPath), { recursive: true, force: true });
+    this.auditTrail?.record(relPath, "delete", 0);
   }
 
   copy(from: string, to: string): void {
     cpSync(this.paths.resolveWorkspacePath(from), this.paths.resolveWorkspacePath(to), { recursive: true });
+    this.auditTrail?.record(to, "create", 0);
   }
 
   move(from: string, to: string): void {

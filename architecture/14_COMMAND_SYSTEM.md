@@ -1,6 +1,6 @@
 # 14 — Command System Architecture
 
-**Frozen interaction architecture for AI Studio. No implementation.**
+**Frozen interaction architecture for AI Studio. Implemented in v0.3.0 (M11d–M11f).**
 
 ---
 
@@ -71,17 +71,18 @@ AI Studio has accumulated multiple interaction surfaces: Dashboard actions, Work
 
 ---
 
-## Command Model (shared, no implementation)
+## Command Model (implemented in `src/shared/command/types.ts`)
 
 ```
-Command Definition:
+CommandMeta (serializable over IPC — no functions):
   id: string                e.g. "workspace.open-file"
   title: string             Display name
   description: string       Tooltip / help text
-  category: CommandCategory Workspace | Dashboard | Session | Runtime | AI | Settings | Navigation
+  category: CommandCategory Workspace | Dashboard | Session | Runtime | AI | Settings | Navigation | Plugin
   keywords: string[]        Search terms for fuzzy matching
   shortcut?: string         e.g. "Ctrl+P"
-  icon?: string             CSS class or icon name
+
+CommandDefinition extends CommandMeta:
   enabled(context): boolean Current context check
   execute(context): void    The action itself
 
@@ -96,24 +97,32 @@ Command Category:
   Plugin     — third-party extensions
 
 Command Context:
-  currentView: "dashboard" | "chat" | "search" | ...
-  selectedFile?: WorkspaceNode
+  currentView: "dashboard" | "chat" | "search" | "editor"
+  selectedFile?: string
   activeSessionId?: string
   query?: string              (from palette input)
+  args?: Record<string, unknown>  (arbitrary handler arguments)
 ```
+
+**Implementation note**: `icon` field from the original design is deferred — not present in current CommandMeta. `CommandContext.args` was added in M12 to support editor commands (e.g., `editor.open` receives `{ path }` as args).
 
 ---
 
-## Registry Design
+## Registry Design (implemented in `src/main/runtime/commands/CommandRegistry.ts`)
 
 ### Responsibilities
 
 - **register(command)**: Add a command to the registry. Plugins call this at startup.
 - **unregister(id)**: Remove a command. Plugins call this at cleanup.
-- **find(query)**: Fuzzy match by id, title, keywords. Returns scored results. Used by Command Palette.
-- **findByCategory(cat)**: Return all commands in a category. Used by context menus.
-- **list()**: Return all registered commands.
-- **execute(id, context)**: Validate `enabled(context)`, then call `execute(context)`. Returns CommandResult.
+- **get(id)**: Exact lookup by command ID. Returns undefined if not found.
+- **has(id)**: Check whether a command ID is registered.
+- **search(query)**: Case-insensitive substring search across title, description, and keywords. Returns `CommandSearchResult[]` with matched fields. Results sorted by title ASC.
+- **listByCategory(cat)**: Return all commands in a category. Used by context menus.
+- **list()**: Return all registered commands in insertion order.
+- **clear()**: Remove all commands.
+- **size**: Number of registered commands.
+
+**Note**: `execute()` moved to CommandExecutor (M11d.2). Registry owns metadata and discovery only. Executor owns dispatch. Never merge the two. (This matches the original architecture's Executor separation.)
 
 ### Lifecycle
 
@@ -138,18 +147,32 @@ AI Interaction
 
 ---
 
-## Executor Design
+## Executor Design (implemented in `src/main/runtime/commands/CommandExecutor.ts`)
 
-### Separation from Registry
+### Handler-based dispatch
 
-| Registry | Executor |
-|---|---|
-| Knows what commands exist | Knows how to run them |
-| Handles discovery | Handles dispatch |
-| Returns metadata | Returns results |
-| Can be queried | Should not be queried |
+The Executor maps command IDs to handlers and dispatches execution requests. Owns NO business logic.
 
-The Registry holds Commands. The Executor runs them. Never merge the two into one class.
+```
+CommandExecutor:
+  registerHandler(commandId, handler)  — wire a handler to a command ID
+  unregisterHandler(commandId)         — remove handler binding
+  hasHandler(commandId)                — check if handler exists
+  listHandlers()                       — list all handler-bound command IDs
+  execute(commandId, context): Promise<CommandResult>
+    → Registry.get(id) → find handler → enabled check → handler.execute() → result
+```
+
+Flow:
+```
+IPC: command:execute(id, args)
+  → CommandExecutor.execute(id, context)
+    → Registry.get(id)        (metadata)
+    → handlers.get(id)        (dispatch)
+    → enabled check           (context validation)
+    → handler.execute(ctx, id) (business logic)
+    → CommandResult           (success/error)
+```
 
 ---
 
@@ -188,14 +211,26 @@ The Registry holds Commands. The Executor runs them. Never merge the two into on
 
 ---
 
-## Implementation Roadmap
+## Implementation Status
 
 ```
-M11c: Architecture Freeze (this document) ← current
-M11d: Command Registry + Executor (no UI)
-M11e: Command Palette UI (Ctrl+P overlay)
-M11f: Wire existing actions as Commands (Dashboard, Workspace, Session)
+M11c: Architecture Freeze (this document)        ← 2026-06-30
+M11d.1: Command Registry (metadata only)          ← ✓ complete
+M11d.2: Command Executor (handler dispatch)       ← ✓ complete
+M11e: Command Palette UI (Ctrl+P overlay)         ← ✓ complete
+M11f: Wire existing actions as Commands           ← ✓ complete (18 commands, 8 handlers)
 ```
+
+### Implemented (v0.3.0)
+
+- `CommandRegistry` — in-memory metadata store with `register/unregister/get/search/listByCategory/list/clear`
+- `CommandExecutor` — handler-based dispatch: `registerHandler/execute` maps to 8 handler classes
+- `DefaultCommandRegistry` — 18 default commands with placeholder stubs
+- `CommandPalette` — React overlay with Ctrl+P/Ctrl+K trigger, keyboard nav, search filtering
+- 8 Handler classes: DashboardHandler, WorkspaceHandler, PreviewHandler, RuntimeHandler, DocumentHandler, EditorHandler, SessionHandler, SettingsHandler
+- `src/shared/command/types.ts` — `CommandMeta` (IPC-safe, no functions), `CommandDefinition`, `CommandContext`, `CommandResult`
+- IPC channels: `command:list`, `command:execute`
+- Preload API: `window.api.command.list()`, `window.api.command.execute()`
 
 ### NOT in scope (v0.4+)
 

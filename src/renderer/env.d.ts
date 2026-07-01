@@ -4,21 +4,195 @@ declare module "*.css" {}
 
 // Dashboard data types — mirror of src/main/dashboard/types.ts
 // The Renderer only sees the shape, never the providers.
+
+// M12.6.6: ProjectState — single unified Dashboard payload
+// Frozen architecture rule: widgets only render, never derive.
+// M12.7: currentTask — first unchecked TODO.md task, pre-computed by DashboardService
+interface ProjectState {
+  currentTask: {
+    taskId: string;
+    title: string;
+    sprint: string;
+    phase: string;
+  } | null;
+  project: { projectName: string; workspacePath: string; branch: string; latestTag: string; headCommit: string; isClean: boolean };
+  milestone: {
+    phase: string;
+    phaseLabel: string;
+    currentMilestone: string;
+    currentMilestoneName: string;
+    milestoneProgress: string;
+    milestoneTasks: Array<{
+      id: string;
+      description: string;
+      completed: boolean;
+    }>;
+    baseline: { tag: string; commit: string; commitsSince: number; lastCommitTime: string };
+    branch: string;
+    headCommit: string;
+  } | null;
+  workingTree: {
+    isClean: boolean;
+    modified: number;
+    untracked: number;
+    files: string[];
+  } | null;
+  nextActions: Array<{
+    priority: number;
+    description: string;
+    source: string;
+  }>;
+  brain: BrainData | null;
+  build: { typecheck: "pass" | "fail" | "unknown"; build: "pass" | "fail" | "unknown" };
+  recent: {
+    commits: Array<{ hash: string; subject: string }>;
+    sessions: Array<{ id: string; title: string }>;
+  } | null;
+  workspaceIndex?: {
+    totalFiles: number;
+    totalDirectories: number;
+    lastIndexTime: number;
+  };
+  /** Pre-computed project status — widgets render, never derive */
+  status: ProjectStatus;
+  /** Development Intelligence state — composed from providers + pure engines (M13) */
+  developmentState?: DevelopmentState;
+  /** Pre-computed recommendation string (M13 stabilization) */
+  recommendation?: string;
+}
+
+// ============================================================
+// DevelopmentState — mirror of src/shared/development/types.ts
+// Renderer only sees the shape, never the engines or providers.
+// M13.5: used by IsHealthy, TodaysRecommendation, RecentActivity
+// ============================================================
+
+interface DevelopmentState {
+  milestone: {
+    id: string;
+    name: string;
+    phase: number;
+    taskProgress: { completed: number; total: number };
+    isActive: boolean;
+  };
+  sprint: {
+    number: number;
+    goal: string;
+    isActive: boolean;
+  };
+  workingSet: {
+    id: string;
+    milestoneId: string;
+    members: Array<{
+      path: string;
+      classification: "core" | "support" | "incidental" | "unknown";
+      changeType: "modified" | "added" | "deleted" | "renamed" | "untracked";
+      hasTestFile: boolean;
+      hasDocFile: boolean;
+    }>;
+    phase: "forming" | "active" | "stabilizing" | "review" | "committed" | "abandoned";
+    isCommitReady: boolean;
+    commitBlockerReason: string | null;
+    createdAt: number;
+    lastModifiedAt: number;
+  };
+  workingSets: Array<{
+    id: string;
+    milestoneId: string;
+    members: Array<{
+      path: string;
+      classification: "core" | "support" | "incidental" | "unknown";
+      changeType: "modified" | "added" | "deleted" | "renamed" | "untracked";
+      hasTestFile: boolean;
+      hasDocFile: boolean;
+    }>;
+    phase: "forming" | "active" | "stabilizing" | "review" | "committed" | "abandoned";
+    isCommitReady: boolean;
+    commitBlockerReason: string | null;
+    createdAt: number;
+    lastModifiedAt: number;
+  }>;
+  changedFiles: Array<{
+    path: string;
+    changeType: "modified" | "added" | "deleted" | "renamed" | "untracked";
+    associatedMilestone: string | null;
+    workingSetId: string | null;
+    staged: boolean;
+  }>;
+  relatedDocuments: Array<{
+    sourcePath: string;
+    docPath: string;
+    relationship: "architecture" | "implementation-docs" | "changelog" | "todo" | "brain" | "principle" | "roadmap" | "logs";
+    isModified: boolean;
+  }>;
+  suggestedCommitScope: {
+    groups: Array<{
+      suggestedMessage: string;
+      files: string[];
+      milestoneId: string;
+      commitType: string;
+    }>;
+    orphanFiles: string[];
+    likelyForgotten: string[];
+    mixesMultipleMilestones: boolean;
+  };
+  warnings: Array<{
+    severity: "info" | "warn" | "error";
+    message: string;
+    affectedFiles: string[];
+    category: string;
+  }>;
+  completionEstimate: {
+    percentage: number;
+    tasks: { completed: number; total: number };
+    files: { changed: number; estimated: number };
+    label: string;
+  };
+  uncommittedRisks: Array<{
+    description: string;
+    severity: "low" | "medium" | "high";
+    mitigation: string;
+  }>;
+  commitReadiness: "ready" | "almost_ready" | "not_ready";
+  commitChecklist: Array<{
+    label: string;
+    passed: boolean;
+    severity: "info" | "warn" | "error";
+    category: "todo" | "fixme" | "stub" | "not-implemented" | "disabled" | "validation" | "milestone";
+  }>;
+}
+
+/** Pre-computed health + recommendation. Computed ONCE by DashboardService. */
+interface ProjectStatus {
+  workingTree: {
+    isClean: boolean;
+    modified: number;
+    untracked: number;
+    files: string[];
+  } | null;
+  build: { typecheck: "pass" | "fail" | "unknown"; build: "pass" | "fail" | "unknown" };
+  recommendationType: "dirty-tree" | "continue-milestone" | "ready-for-next";
+  recommendationContext: string;
+}
+
+/**
+ * @deprecated Use ProjectState instead. DashboardRawData is kept for
+ * backward compatibility with legacy IPC callers. Will be removed
+ * after full migration is verified.
+ */
 interface DashboardRawData {
   milestone: {
     phase: string;
-    currentSprint: number;
-    completedSprints: number;
-    totalSprints: number;
-    progressPercent: number;
-    sprints: Array<{
-      number: number;
-      name: string;
+    phaseLabel: string;
+    currentMilestone: string;
+    currentMilestoneName: string;
+    milestoneProgress: string;
+    milestoneTasks: Array<{
+      id: string;
+      description: string;
       completed: boolean;
-      totalTasks: number;
-      completedTasks: number;
     }>;
-    baseline: { tag: string; commit: string; commitsSince: number };
+    baseline: { tag: string; commit: string; commitsSince: number; lastCommitTime: string };
     branch: string;
     headCommit: string;
   } | null;
@@ -37,6 +211,11 @@ interface DashboardRawData {
     commits: Array<{ hash: string; subject: string }>;
     sessions: Array<{ id: string; title: string }>;
   } | null;
+  workspaceIndex?: {
+    totalFiles: number;
+    totalDirectories: number;
+    lastIndexTime: number;
+  };
 }
 
 interface BrainData {
@@ -80,7 +259,7 @@ interface Window {
       ) => () => void;
     };
     session: {
-      create: (adapter: string) => Promise<{
+      create: (adapter?: string) => Promise<{
         id: string;
         title: string;
         runtime: string;
@@ -183,6 +362,16 @@ interface Window {
       onLanguageChange: (callback: (locale: string) => void) => () => void;
     };
     command: {
+      list: () => Promise<
+        Array<{
+          id: string;
+          title: string;
+          description: string;
+          category: string;
+          keywords: string[];
+          shortcut?: string;
+        }>
+      >;
       execute: (id: string, args?: Record<string, unknown>) => Promise<{
         success: boolean;
         commandId: string;

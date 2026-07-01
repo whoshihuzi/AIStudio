@@ -26,13 +26,19 @@ export interface CommandContext {
   selectedFile?: string;
   activeSessionId?: string;
   query?: string;
+  /** Arbitrary arguments passed by the caller. Handlers extract what they need. */
+  args?: Record<string, unknown>;
 }
 
 // ----------------------------------------------------------
 // CommandDefinition — a single executable command
 // ----------------------------------------------------------
 
-export interface CommandDefinition {
+/**
+ * Serializable command metadata sent over IPC to the Renderer for
+ * Command Palette display. Never includes functions — only data.
+ */
+export interface CommandMeta {
   /** Unique identifier. e.g. "workspace.open-file" */
   id: string;
   /** Display name. Shown in Command Palette. */
@@ -45,6 +51,9 @@ export interface CommandDefinition {
   keywords: string[];
   /** Optional keyboard shortcut. e.g. "Ctrl+P" */
   shortcut?: string;
+}
+
+export interface CommandDefinition extends CommandMeta {
   /** Whether this command is available in the current context. */
   enabled(context: CommandContext): boolean;
   /** Execute the command. */

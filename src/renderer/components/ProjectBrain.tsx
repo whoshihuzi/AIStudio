@@ -1,5 +1,9 @@
 // ============================================================
-// ProjectBrain — AI context display.
+// ProjectBrain — AI context display (auto-synced from TODO.md).
+//
+// M12.7: no longer duplicates Current Task (milestone/task ID).
+// Shows only: current focus goal, sprint + phase context,
+// project metadata (version, decisions, layers).
 // ============================================================
 
 import { useDashboardStore } from "@/stores/dashboard";
@@ -8,7 +12,8 @@ import { Card, SectionHeader } from "./ui/base";
 
 export function ProjectBrain() {
   const { t } = useTranslation();
-  const brain = useDashboardStore((s) => s.brainData);
+  const projectState = useDashboardStore((s) => s.projectState);
+  const brain = projectState?.brain;
   if (!brain) return null;
   const fmt = (ts: number) => new Date(ts).toLocaleDateString();
 
@@ -17,8 +22,10 @@ export function ProjectBrain() {
       <SectionHeader title={t.dashboard.projectBrain} />
       <div className="mb-3">
         <div className="text-xs text-gray-600 mb-1">{t.dashboard.currentFocus}</div>
-        <div className="text-sm text-gray-300">{brain.currentFocus.milestone}</div>
-        <div className="text-xs text-gray-500">{brain.currentFocus.sprint} — {brain.currentFocus.goal}</div>
+        <div className="text-sm text-gray-300">{brain.currentFocus.goal}</div>
+        <div className="text-xs text-gray-500 mt-1">
+          {brain.currentFocus.sprint} &middot; {brain.project.phase}
+        </div>
         <div className="text-xs text-gray-700 mt-1">{t.dashboard.lastUpdated}: {fmt(brain.currentFocus.updatedAt)}</div>
       </div>
       <div className="border-t border-gray-700/30 pt-3 space-y-1">

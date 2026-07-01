@@ -4,28 +4,34 @@
 // knows which provider produced each piece.
 // ============================================================
 
-export interface SprintStatus {
-  number: number;
-  name: string;
-  completed: boolean;
-  totalTasks: number;
-  completedTasks: number;
-}
+import type { DevelopmentState } from "../../shared/development/types.js";
 
 export interface MilestoneProgress {
   phase: string;
-  currentSprint: number;
-  completedSprints: number;
-  totalSprints: number;
-  progressPercent: number;
-  sprints: SprintStatus[];
+  /** e.g. "Phase 3 — Workspace Intelligence" */
+  phaseLabel: string;
+  /** e.g. "M12" */
+  currentMilestone: string;
+  /** e.g. "Editor Foundation" */
+  currentMilestoneName: string;
+  /** e.g. "3 of 8 tasks" or "2 of 5 complete" */
+  milestoneProgress: string;
+  /** Tasks in the current milestone group */
+  milestoneTasks: MilestoneTask[];
   baseline: {
     tag: string;
     commit: string;
     commitsSince: number;
+    lastCommitTime: string;
   };
   branch: string;
   headCommit: string;
+}
+
+export interface MilestoneTask {
+  id: string;
+  description: string;
+  completed: boolean;
 }
 
 export interface WorkingTree {
@@ -51,11 +57,29 @@ export interface RecentActivity {
   sessions: Array<{ id: string; title: string }>;
 }
 
+/**
+ * @deprecated Use ProjectState instead. DashboardRawData is kept for
+ * backward compatibility with legacy callers (ValidationProvider,
+ * DashboardService.getData()). Will be removed after full migration
+ * is verified.
+ */
 export interface DashboardRawData {
   milestone: MilestoneProgress | null;
   workingTree: WorkingTree | null;
   nextActions: NextAction[];
   recent: RecentActivity | null;
+  /** Workspace metadata from index (Task 6) */
+  workspaceIndex?: WorkspaceIndexSnapshot;
+}
+
+// ============================================================
+// Workspace Index — snapshot for Dashboard (Task 6)
+// ============================================================
+
+export interface WorkspaceIndexSnapshot {
+  totalFiles: number;
+  totalDirectories: number;
+  lastIndexTime: number;
 }
 
 // ============================================================
@@ -135,6 +159,79 @@ export interface BrainData {
   architecture: BrainArchitecture;
   decisions: BrainDecisions;
   currentFocus: BrainCurrentFocus;
+}
+
+// ============================================================
+// CurrentTask — first unchecked task (M12.7)
+//
+// Pre-computed by DashboardService from milestone + brain.
+// Widget renders, never derives.
+// ============================================================
+
+export interface CurrentTask {
+  taskId: string;        // "M11e"
+  title: string;         // "Command Palette UI (Ctrl+P)"
+  sprint: string;        // "Sprint 4"
+  phase: string;         // "Phase 3"
+}
+
+// ============================================================
+// ProjectState — single unified Dashboard payload (M12.6.6)
+//
+// Dashboard renders from ONE object instead of assembling
+// multiple unrelated values. DashboardService composes this
+// from existing providers. No new Provider. No new IPC.
+//
+// Frozen architecture rule: ProjectState is composed ONLY by
+// DashboardService. Providers own only their own domains.
+// Widgets never derive ProjectState — they only render it.
+// ============================================================
+
+export interface ProjectState {
+  /** Current task: first unchecked TODO.md task (M12.7) */
+  currentTask: CurrentTask | null;
+  /** Git identity + workspace snapshot */
+  project: ProjectInfo;
+  /** Mission Control: current milestone from TODO.md */
+  milestone: MilestoneProgress | null;
+  /** Working tree status */
+  workingTree: WorkingTree | null;
+  /** Priority-ordered next actions from TODO.md */
+  nextActions: NextAction[];
+  /** Project Brain: long-term AI context */
+  brain: BrainData | null;
+  /** Build health (typecheck + build) */
+  build: BuildStatus;
+  /** Recent activity (commits + sessions) */
+  recent: RecentActivity | null;
+  /** Workspace index snapshot (optional) */
+  workspaceIndex?: WorkspaceIndexSnapshot;
+  /** Pre-computed project status — widgets render, never derive */
+  status: ProjectStatus;
+  /** Development Intelligence state — composed from providers + pure engines */
+  developmentState?: DevelopmentState;
+  /** Pre-computed recommendation string (M13: actionable, specific) */
+  recommendation?: string;
+}
+
+// ============================================================
+// ProjectStatus — pre-computed health + recommendation.
+//
+// Computed ONCE by DashboardService. Widgets read from this
+// and NEVER recompose or reinterpret status from raw fields.
+// ============================================================
+
+export type RecommendationType = "dirty-tree" | "continue-milestone" | "ready-for-next";
+
+export interface ProjectStatus {
+  /** Working tree status snapshot */
+  workingTree: WorkingTree | null;
+  /** Build health */
+  build: BuildStatus;
+  /** Pre-computed recommendation type — widget maps to i18n, no logic */
+  recommendationType: RecommendationType;
+  /** Milestone identifier for "continue-milestone" recommendations */
+  recommendationContext: string;
 }
 
 // ============================================================

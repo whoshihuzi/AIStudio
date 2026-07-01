@@ -59,7 +59,7 @@ contextBridge.exposeInMainWorld("api", {
   },
 
   session: {
-    create: (adapter: string): Promise<SessionMeta> =>
+    create: (adapter?: string): Promise<SessionMeta> =>
       ipcRenderer.invoke("session:create", adapter),
     list: (): Promise<SessionMeta[]> => ipcRenderer.invoke("session:list"),
     load: (id: string): Promise<SessionData | null> =>
@@ -140,6 +140,8 @@ contextBridge.exposeInMainWorld("api", {
   },
 
   command: {
+    list: (): Promise<unknown> =>
+      ipcRenderer.invoke("command:list"),
     execute: (id: string, args?: Record<string, unknown>): Promise<unknown> =>
       ipcRenderer.invoke("command:execute", id, args),
   },

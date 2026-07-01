@@ -1,23 +1,30 @@
 // ============================================================
 // PreviewPanel — read-only file preview.
+// Reads activeDocumentId / state from PreviewStore,
+// document data (content, metadata) from DocumentStore.
 // ============================================================
 
 import { useWorkspacePreviewStore } from "@/stores/workspace-preview";
+import { useDocumentStore } from "@/stores/document";
 import { LoadingState, ErrorState } from "./ui/base";
 
 export function PreviewPanel() {
-  const file = useWorkspacePreviewStore((s) => s.file);
+  const activeDocumentId = useWorkspacePreviewStore((s) => s.activeDocumentId);
   const loading = useWorkspacePreviewStore((s) => s.loading);
   const error = useWorkspacePreviewStore((s) => s.error);
   const closePreview = useWorkspacePreviewStore((s) => s.close);
   const refresh = useWorkspacePreviewStore((s) => s.refresh);
+
+  const doc = activeDocumentId
+    ? useDocumentStore((s) => s.get(activeDocumentId))
+    : undefined;
 
   function handleClose() {
     window.api.command.execute("preview.close");
     closePreview();
   }
 
-  if (!file && !loading && !error) {
+  if (!activeDocumentId && !loading && !error) {
     return (
       <div className="flex-1 flex items-center justify-center text-xs text-gray-600">
         Select a file from Workspace Explorer to preview.
@@ -30,16 +37,16 @@ export function PreviewPanel() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-700 bg-gray-850 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          {file && (
+          {doc && (
             <>
-              <span className="text-sm text-gray-300 font-medium truncate">{file.name}</span>
-              <span className="text-xs text-gray-600 font-mono hidden sm:inline truncate">{file.path}</span>
-              <span className="text-xs text-gray-700 shrink-0">{formatSize(file.size)}</span>
+              <span className="text-sm text-gray-300 font-medium truncate">{doc.name}</span>
+              <span className="text-xs text-gray-600 font-mono hidden sm:inline truncate">{doc.path}</span>
+              <span className="text-xs text-gray-700 shrink-0">{doc.size != null ? formatSize(doc.size) : ""}</span>
             </>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {file && (
+          {doc && (
             <button onClick={refresh} className="text-xs text-gray-500 hover:text-gray-300">
               ↻
             </button>
@@ -56,13 +63,13 @@ export function PreviewPanel() {
           <div className="p-4"><LoadingState lines={8} /></div>
         ) : error ? (
           <div className="p-4"><ErrorState message="Cannot read file." onRetry={refresh} /></div>
-        ) : file ? (
+        ) : doc?.content != null ? (
           <>
             <div className="px-4 py-2 text-xs text-gray-600 border-b border-gray-800">
-              Modified {formatDate(file.modifiedAt)}
+              {doc.modifiedAt != null ? `Modified ${formatDate(doc.modifiedAt)}` : ""}
             </div>
             <pre className="p-4 text-xs text-gray-300 font-mono whitespace-pre overflow-x-auto leading-relaxed">
-              {file.content}
+              {doc.content}
             </pre>
           </>
         ) : null}

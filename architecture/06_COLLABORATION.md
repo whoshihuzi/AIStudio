@@ -95,19 +95,24 @@ Human acknowledges or redirects
 ### AI Agent → AIStudio
 
 ```
-AI reads/writes through AIStudio's IPC:
+AI reads/writes through AIStudio's preload API:
     - agent:send → start a task
     - agent:event ← receive streaming output
-    - session:save → persist state
+    - agent:abort → cancel running task
+    - session:* → CRUD sessions (create/list/load/save/delete)
+    - workspace:* → file operations (list/stat/read/write/rename/mkdir/delete/copy/move)
+    - command:* → execute commands (list registered commands, dispatch by ID)
+    - dashboard:* → refresh data, run checks
+    - config:* → get/set settings, language change notifications
 ```
 
-**Key rule**: The AI uses AIStudio as its medium, never bypassing it (e.g., writing files directly to disk without going through IPC).
+**Key rule**: The AI uses AIStudio as its medium. The Renderer communicates through IPC via the preload bridge. The Agent's own CLI tools (Hermes `--cli` mode) have direct filesystem access as a practical necessity; the Architecture's ambition is that agents eventually receive workspace context through ContextBuilder and act through the Command System rather than raw CLI file access.
 
 ---
 
 ## Session Protocol
 
-Each development session follows the Development Lifecycle defined in `05_DEVELOPMENT_PROTOCOL.md`. The human-AI interaction within that lifecycle follows the communication protocols above.
+Each development session follows the Development Lifecycle defined in `docs/07_DEVELOPMENT_WORKFLOW.md`. The human-AI interaction within that lifecycle follows the communication protocols above.
 
 In brief: Bootstrap → Context → Understand → Plan → Implement → Document → Handoff. See the Development Protocol for detailed steps and quality gates at each phase.
 

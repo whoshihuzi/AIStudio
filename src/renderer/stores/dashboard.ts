@@ -1,7 +1,8 @@
 // ============================================================
 // DashboardStore — Zustand store for Dashboard data.
-// Activity state is the single global indicator — no component
-// maintains its own loading flag.
+//
+// M12.6.6: receives a single projectState object from
+// dashboard.refresh instead of separate data/projectInfo/brainData.
 // ============================================================
 
 import { create } from "zustand";
@@ -18,20 +19,10 @@ export type ActivityState =
   | "building"
   | "typechecking";
 
-export interface ProjectInfo {
-  projectName: string;
-  workspacePath: string;
-  branch: string;
-  latestTag: string;
-  headCommit: string;
-  isClean: boolean;
-}
-
 export interface DashboardState {
-  data: DashboardRawData | null;
+  // M12.6.6: unified project state
+  projectState: ProjectState | null;
   build: DashboardBuildStatus;
-  projectInfo: ProjectInfo | null;
-  brainData: BrainData | null;
   activity: ActivityState;
   loading: boolean;
   error: string | null;
@@ -40,11 +31,9 @@ export interface DashboardState {
   refreshBuild: () => Promise<void>;
 }
 
-export const useDashboardStore = create<DashboardState>((set, get) => ({
-  data: null,
+export const useDashboardStore = create<DashboardState>((set) => ({
+  projectState: null,
   build: { typecheck: "unknown", build: "unknown" },
-  projectInfo: null,
-  brainData: null,
   activity: "idle",
   loading: false,
   error: null,
@@ -57,14 +46,10 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         throw new Error(result.error ?? "Unknown error");
       }
       const payload = result.payload as {
-        data: DashboardRawData;
-        projectInfo: ProjectInfo;
-        brainData: BrainData;
+        projectState: ProjectState;
       };
       set({
-        data: payload.data,
-        projectInfo: payload.projectInfo,
-        brainData: payload.brainData,
+        projectState: payload.projectState,
         loading: false,
         activity: "idle",
       });

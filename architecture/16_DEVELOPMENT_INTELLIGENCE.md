@@ -1,6 +1,6 @@
 # 16 — Development Intelligence Architecture
 
-**Frozen Development Intelligence architecture for AI Studio. No implementation. No UI. No IPC. Architecture and data model only.**
+**Frozen Development Intelligence architecture for AI Studio. Implemented in v0.3.0 (M13). Architecture validated against all 18 design principles. Implementation verified via `npm run typecheck && npm run build`.**
 
 ---
 
@@ -890,20 +890,47 @@ The Development Intelligence architecture must not violate any existing Design P
 
 ---
 
-## 10. Implementation Sequence (Future)
+## 10. Implementation Status (v0.3.0)
 
 ```
-M12.7a: Architecture Freeze (this document) ← current
-M12.7b: DevelopmentState types (src/shared/development/types.ts)
-M12.7c: DevelopmentIntelligenceService skeleton (compose providers)
-M12.7d: WorkingSet derivation logic (file classification + membership)
-M12.7e: CompletionEstimate + warning derivation
-M12.7f: Related document detection
-M12.7g: Commit intelligence (grouping + contamination)
-M12.7h: Wire to DashboardService (alongside existing providers)
-M12.7i: Dashboard "Health" section surface DevelopmentState.warnings
-M12.7j: Command Palette dynamic commands from DevelopmentState
+M13: Development Intelligence                           ← ✓ complete
+  Construction Step 1: Domain types (src/shared/development/types.ts)  ← ✓
+  Construction Step 2: Pure analysis engines (8 engines)               ← ✓
+  Construction Step 3: DevelopmentIntelligenceService (composition)    ← ✓
+  Construction Step 4: DevelopmentState verification + Inspector       ← ✓
+  Construction Step 5: Dashboard integration (3 widgets refactored)    ← ✓
+  M13 Stabilization: WorkingSet milestone-awareness, tri-state commit  ← ✓
 ```
+
+### Implemented
+
+| Module | Location | Status |
+|---|---|---|
+| Domain types (15 interfaces, 7 union types) | `src/shared/development/types.ts` | ✓ |
+| FileClassifier | `src/main/development/FileClassifier.ts` | ✓ (milestone-aware) |
+| WorkingSetEngine | `src/main/development/WorkingSetEngine.ts` | ✓ (multi-WS) |
+| DocCouplingEngine | `src/main/development/DocCouplingEngine.ts` | ✓ (18 rules with reasons) |
+| WarningAnalyzer | `src/main/development/WarningAnalyzer.ts` | ✓ |
+| CompletionAnalyzer | `src/main/development/CompletionAnalyzer.ts` | ✓ |
+| CommitAnalyzer | `src/main/development/CommitAnalyzer.ts` | ✓ (tri-state + checklist) |
+| RiskAnalyzer | `src/main/development/RiskAnalyzer.ts` | ✓ |
+| ProjectActivity | `src/main/development/ProjectActivity.ts` | ✓ (pure projection) |
+| DevIntelligenceService | `src/main/development/DevelopmentIntelligenceService.ts` | ✓ (pure composer) |
+| DevStateInspector | `src/main/development/DevelopmentStateInspector.ts` | ✓ (dev util) |
+| Dashboard integration | Dashboard widgets: IsHealthy, TodaysRecommendation, RecentActivity | ✓ |
+| i18n | 21 Development Intelligence keys (en + zh-CN) | ✓ |
+
+### Dashboard Integration
+
+`DevelopmentState` is composed by `DashboardService.getProjectState()` and attached as `state.developmentState`. Three Dashboard widgets consume it:
+
+| Widget | Consumption | Source |
+|---|---|---|
+| IsHealthy | completion %, warnings count, commit readiness, risks count | `devState` |
+| TodaysRecommendation | `devState.workingSet.phase` → phase-based recommendation | `devState` (pre-computed) |
+| RecentActivity | `devState.changedFiles`, `devState.relatedDocuments` | `devState` |
+
+Dashboard is a pure presentation layer — zero business logic, zero derivation from raw fields.
 
 ### NOT in v0.3
 

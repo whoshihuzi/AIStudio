@@ -4,29 +4,21 @@
 // ============================================================
 
 // ----------------------------------------------------------
-// EditorFile — a file opened in the editor
+// DocumentMetadata — canonical document model.
+// Owned by DocumentStore. Referenced by all Views by path.
 // ----------------------------------------------------------
 
-export interface EditorFile {
-  /** Path relative to workspace root. */
+export interface DocumentMetadata {
+  /** Stable identifier (workspace-relative path). */
   path: string;
   /** Display name (filename only). */
   name: string;
-  /** Whether the file has unsaved changes. */
-  dirty: boolean;
-}
-
-// ----------------------------------------------------------
-// EditorState — aggregate editor state (shared contract)
-// ----------------------------------------------------------
-
-export interface EditorState {
-  /** Currently open files (tabs). */
-  openFiles: EditorFile[];
-  /** The active (focused) file, if any. */
-  activeFile: EditorFile | null;
-  /** Set of paths with unsaved changes. */
-  dirtyFiles: Set<string>;
-  /** Whether the editor panel is visible. */
-  isVisible: boolean;
+  /** File content (loaded on demand by PreviewStore). */
+  content?: string;
+  /** Size in bytes. */
+  size?: number;
+  /** Last modified timestamp (ms since epoch). */
+  modifiedAt?: number;
+  /** Inferred language from extension. */
+  language?: string;
 }

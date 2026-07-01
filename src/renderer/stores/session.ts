@@ -53,7 +53,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   },
 
   createSession: async () => {
-    const meta = await window.api.session.create("hermes");
+    const meta = await window.api.session.create();
     set((s) => ({
       sessions: [meta, ...s.sessions],
       activeSessionId: meta.id,

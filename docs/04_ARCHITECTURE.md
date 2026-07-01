@@ -4,6 +4,8 @@ AI Studio follows a layered architecture.
 
 No module may bypass these layers.
 
+**Last synced: 2026-07-01 — matches v0.3.0 implementation.**
+
 ---
 
 # Layer Structure
@@ -28,15 +30,17 @@ Infrastructure
 
 Responsibilities:
 
-User Interface
+User Interface (React + TypeScript)
 
 Interaction
 
 Rendering
 
-Window Management
+Window Management (Electron BrowserWindow)
 
 Theme
+
+Command Palette overlay
 
 No business logic.
 
@@ -50,37 +54,29 @@ Coordinate workflows.
 
 Manage conversations.
 
-Manage projects.
-
 Manage sessions.
 
-Dispatch commands.
+Dispatch commands (CommandExecutor + handlers).
+
+DashboardService — single entry point for all Dashboard data.
+
+SessionPersistence — auto-save with exit flush.
+
+No business logic derivation — renders pre-computed data.
 
 ---
 
 # Domain Layer
 
-Core concepts:
+Core concepts (in `src/shared/`):
 
-Conversation
+Conversation, Message, Workspace, Project, Task, Agent, Memory, Plugin, Artifact, Checkpoint
 
-Message
+Command types — CommandMeta, CommandDefinition, CommandContext, CommandResult
 
-Workspace
+Development Intelligence types — DevelopmentState, WorkingSet, ChangedFile, etc.
 
-Project
-
-Task
-
-Agent
-
-Memory
-
-Plugin
-
-Artifact
-
-Checkpoint
+Editor types — DocumentMetadata, EditorState, DiffHunk, WriteAuditEntry
 
 The Domain layer contains the business rules.
 
@@ -96,23 +92,19 @@ No Electron code.
 
 Responsibilities:
 
-Hermes
+Runtime Manager — ProcessAgentRuntime, adapters, session store
 
-Filesystem
+WorkspaceProvider — file I/O through single write gate + WriteAuditTrail
 
-Git
+CommandRegistry + CommandExecutor — handler-based command dispatch
 
-SQLite
+DevelopmentIntelligenceService — pure composition of 8 analysis engines
 
-Configuration
+Dashboard providers — GitProvider, TodoProvider, BrainProvider, etc.
 
-Logging
+WorkspaceIndexStore + SearchProvider — metadata index
 
-Terminal
-
-Operating System
-
-External APIs
+FileSystem, Git, Configuration, Logging
 
 Infrastructure serves the Domain.
 
@@ -122,40 +114,22 @@ Never the reverse.
 
 # Dependency Rules
 
-Presentation
+Presentation depends on Application
 
-depends on
+Application depends on Domain + Infrastructure
 
-Application
+Domain depends on nothing
 
-Application
-
-depends on
-
-Domain
-
-Infrastructure
-
-Domain
-
-Infrastructure depends on Domain.
-
-Domain depends on nothing.
+Infrastructure depends on Domain
 
 ---
 
 # Future Extension
 
-Future AI agents should only require implementing:
+Future AI agents should only require implementing: IAgentRuntime
 
-IAgent
+Future plugins should only require implementing: IPlugin
 
-Future plugins should only require implementing:
-
-IPlugin
-
-Future memory systems should only require implementing:
-
-IMemory
+Future memory systems should only require implementing: IMemory
 
 The architecture should remain stable even if every implementation changes.

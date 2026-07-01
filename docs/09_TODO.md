@@ -51,28 +51,46 @@ Phase 3 — Workspace Intelligence (v0.3.0)
 
 # Sprint 4
 
-Phase 3 — Command System + Search UI (current)
+Phase 3 — Command System + Editor (current)
 
 * [x] M11d.1: Command Registry (metadata only, no execute)
 * [x] M11d.2: Command Executor
 * [x] M12a: Editor Architecture Freeze (documentation only)
 * [x] M12b: Editor Skeleton (EditorPanel, EditorStore, EmptyEditor, EditorToolbar)
-* [ ] M11e: Command Palette UI (Ctrl+P)
-* [ ] M11f: Wire existing actions as Commands
-* [ ] M12: Code Manipulation Foundation (write audit, diff skeleton)
+* [x] M11e: Command Palette UI (Ctrl+P)
+* [x] M11f: Wire existing actions as Commands
+* [x] M12: Code Manipulation Foundation (write audit, diff skeleton)
+* [x] M13: Development Intelligence (construction plan complete, implementation complete)
 
 ---
 
 # Sprint 5
 
-Phase 3 — Remaining
+Phase 3 — Diff + Patch
 
-* [ ] M12: Diff View
-* [ ] M12: Accept / Reject
-* [ ] M12: Patch application
+* [x] M12: Diff View
+* [x] M12: Accept / Reject
+* [x] M12: Patch application (command registered + handler stub; full implementation deferred)
+* [x] M13.6: Release Documentation Synchronization (current)
+
+---
+
+# Sprint 6 — v0.4.0+
+
+Phase 3 — Remaining + Phase 4 Prep
+
+* [ ] editor.apply-patch full implementation (command registered, handler stub exists)
+* [ ] Monaco/CodeMirror editor upgrade (textarea is sufficient for skeleton)
+* [ ] Undo/Redo stack
+* [ ] Multi-project support (Phase 4)
+* [ ] Full-text workspace search (`searchText` + `glob` stubs exist)
+* [ ] Plugin system foundation
+* [ ] AI tool calling through Command System (currently agents use CLI tools)
 
 ---
 
 # Sprint Goal
 
 Replace PowerShell for daily Hermes usage — then surpass it.
+
+v0.3.0 goal: intelligent workspace with editing, commands, and development awareness.

@@ -103,26 +103,27 @@ Readable architecture is more important than clever implementation.
 
 # Success Criteria
 
-Phase 1
-
+Phase 1 (v0.1.0) ✓
 Hermes can be used entirely through AI Studio.
-
 No PowerShell required.
 
-Phase 2
+Phase 2 (v0.2.0) ✓
+Dashboard + Brain.
+Project awareness. AI context.
 
-Project management.
-
-Phase 3
-
-Multi-Agent.
+Phase 3 (v0.3.0) ◄ Current
+Workspace Intelligence: editor, commands, diff, development awareness.
 
 Phase 4
-
-Workflow Automation.
+Multi-Project management.
 
 Phase 5
+Multi-Agent.
 
+Phase 6
+Workflow Automation.
+
+Phase 7
 AI Studio develops AI Studio.
 
 ---

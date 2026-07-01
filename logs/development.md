@@ -1,5 +1,28 @@
 # Development Log
 
+## 2026-07-01 — M13 Stabilization Sprint
+
+### Goal
+Stabilize Development Intelligence — make it trustworthy without adding new features (no Timeline, Workflow, Multi-Agent, AI reasoning).
+
+### Tasks Completed
+1. **Working Set correctness** — `WorkingSetEngine.deriveWorkingSets()` groups files by milestone via deterministic path patterns. Never merges different milestones. Backward compatible for single-milestone projects.
+2. **Document Coupling refinement** — Architecture docs only required when architectural modules change. Renderer-only changes → implementation docs + changelog + logs. Each rule has explicit reason.
+3. **Commit Readiness refinement** — Tri-state: `ready` | `almost_ready` | `not_ready`, with checklist items (milestone, classification, warnings, contamination). Detects incomplete tasks, unknown files, error warnings.
+4. **Recommendation refinement** — Never produces vague recommendations. Examples: "Split into 2 commits: feat(…); docs: …", "Update 3 documentation file(s)", "Assign 5 orphan file(s) to a milestone".
+5. **Dashboard cleanup** — `TodaysRecommendation` is now a pure renderer receiving pre-computed string. All decisions live in `DevelopmentState` before reaching widgets.
+
+### Files Changed
+17 files — engines, types, service, inspector, widgets, i18n, documentation.
+
+### Build
+- `npm run typecheck` — PASS (zero errors)
+- `npm run build` — PASS (all entries built)
+
+### Documentation
+- `docs/development-intelligence-review.md` — complete M13 stabilization review
+- `docs/10_CHANGELOG.md` — v0.3.1 entry added
+
 ## 2026-06-27 — Milestone 1: Project Skeleton & Governance
 
 ### Objectives
@@ -410,3 +433,581 @@ Milestone 5: Streaming + Markdown Rendering
 
 ### Next Milestone
 Milestone 6: Quality Gates (ESLint + Prettier enforcement)
+
+---
+
+## 2026-06-30 — M11e: Document Lifecycle Architecture Refinement (pre-implementation)
+
+### Objectives
+- Codify ownership boundaries for DocumentHandler (lifecycle only, no content)
+- Codify ownership boundaries for documentBridge (transport only, no store access)
+- Establish frozen architecture rules BEFORE M11e/M11f implementation
+
+### Completed Work
+- Created `DocumentHandler` (main process) with explicit prohibition against reading file content
+  - Commands: `document.ensure`, `document.activate`, `document.reveal`, `document.close`
+  - Lifecycle only: may use WorkspaceService.exists(), never readFile/readFileNode
+  - Content loading belongs to Preview/Editor/ContentProvider layer
+- Created `documentBridge` (renderer) as a transport-only pipe
+  - Wraps `window.api.command.execute()` → returns `CommandResult`
+  - Zero store imports: no DocumentStore, EditorStore, WorkspacePreviewStore
+  - Ownership rule: `Command → CommandResult → Renderer Store` (not `Command → Bridge → Multiple Stores`)
+- Added 4 document commands to `DefaultCommandRegistry`
+- Wired `DocumentHandler` into `CommandExecutor` in `main/index.ts`
+- Updated `architecture/15_EDITOR_ARCHITECTURE.md` — new Section 2.5 frozen rules
+- Updated `architecture/15_EDITOR_ARCHITECTURE.md` — Section 11 frozen entries
+- Updated `docs/editor-architecture-review.md` — Net-New Modules table
+
+### Files Created/Modified
+| File | Action |
+|------|--------|
+| `src/main/runtime/commands/handlers/DocumentHandler.ts` | Created |
+| `src/renderer/runtime/document-bridge.ts` | Created |
+| `src/main/runtime/commands/DefaultCommandRegistry.ts` | Modified (+4 document commands) |
+| `src/main/index.ts` | Modified (+DocumentHandler import + 4 handler registrations) |
+| `architecture/15_EDITOR_ARCHITECTURE.md` | Modified (+Section 2.5, +Section 11 entries) |
+| `docs/editor-architecture-review.md` | Modified (+Net-New Modules for DocumentHandler/documentBridge) |
+
+### Verification Results
+- `npm run typecheck` — zero errors
+- `npm run build` — 38 main modules, 1133 client modules, clean
+
+### Architecture Notes
+- No milestone scope changes — these are ownership clarifications only
+- DocumentHandler stubs return `{ success: false, error: "not yet implemented" }` for activate/reveal/close
+- documentBridge convenience wrappers (ensureDocument, activateDocument, etc.) are pure thin wrappers
+- Both modules are ready for M11e/M11f implementation with clear ownership rules
+
+### Next Milestone
+M11e: Command Palette UI
+
+---
+
+## 2026-06-30 — Milestone M12.6: Dashboard → Mission Control Refresh
+
+### Objectives
+- Refresh Dashboard information architecture without adding providers or IPC
+- Replace Sprint-focused display with Current Milestone
+- Auto-sync Project Brain from TODO.md
+- Add Workspace widget from WorkspaceIndexStore
+- Improve Git info with relative commit time
+- Restructure Working Tree display and Recommendations
+
+### Completed Work
+- Refactored `TodoProvider` to parse milestone tasks from TODO.md (was sprint-focused)
+- Created `BrainFocusSync.ts` to auto-sync brain currentFocus from TODO.md
+- Updated `MilestoneProgress` type: currentMilestone, phaseLabel, milestoneTasks, lastCommitTime
+- Added `getLastCommitTime()` to GitProvider
+- DashboardHandler now accepts WorkspaceIndexStore for index stats
+- New renderer components: `CurrentMilestone.tsx`, `TodaysRecommendation.tsx`, `WorkspaceWidget.tsx`
+- Updated i18n keys (Mission Control style): Project, Workspace, Health, Recommendation
+- Replaced Working Tree display: Clean/Dirty header with separate Modified/Untracked counts
+- Today's Recommendation: priority-based (dirty → commit, milestone → continue, clean → ready)
+- No new providers, no new IPC channels, no disk scanning
+
+### Files Created/Modified
+| File | Action |
+|------|--------|
+| `src/main/dashboard/BrainFocusSync.ts` | Created |
+| `src/main/dashboard/types.ts` | Modified |
+| `src/main/dashboard/TodoProvider.ts` | Modified |
+| `src/main/dashboard/GitProvider.ts` | Modified |
+| `src/main/dashboard/DashboardService.ts` | Modified |
+| `src/main/dashboard/BrainProvider.ts` | Modified |
+| `src/main/dashboard/ValidationProvider.ts` | Modified |
+| `src/main/runtime/commands/handlers/DashboardHandler.ts` | Modified |
+| `src/main/index.ts` | Modified |
+| `src/renderer/env.d.ts` | Modified |
+| `src/renderer/i18n/types.ts` | Modified |
+| `src/renderer/i18n/en.ts` | Modified |
+| `src/renderer/i18n/zh-CN.ts` | Modified |
+| `src/renderer/components/Dashboard.tsx` | Modified |
+| `src/renderer/components/CurrentMilestone.tsx` | Created |
+| `src/renderer/components/TodaysRecommendation.tsx` | Created |
+| `src/renderer/components/WorkspaceWidget.tsx` | Created |
+| `src/renderer/components/IsHealthy.tsx` | Modified |
+| `src/renderer/components/ProjectBrain.tsx` | Modified |
+| `src/renderer/components/WhereAmI.tsx` | Deprecated (stub) |
+| `src/renderer/components/WhatNext.tsx` | Deprecated (stub) |
+| `docs/dashboard-acceptance-checklist.md` | Modified |
+| `docs/10_CHANGELOG.md` | Modified |
+
+### Verification Results
+- `npm run typecheck` — zero errors
+- `npm run build` — 39 main modules, 1134 client modules, clean
+
+### Architecture Notes
+- No new providers added — all existing Provider responsibilities preserved
+- BrainFocusSync is a pure function module, not a Provider
+- WorkspaceIndexStore feeds Dashboard via DashboardHandler (no Renderer IPC for index)
+- Old WhereAmI.tsx and WhatNext.tsx kept as stubs for git history
+
+### Next Milestone
+M11e: Command Palette UI
+
+---
+
+## 2026-06-30 — M12.7: Dashboard Information Architecture Correction
+
+### Objectives
+- Separate "Current Task" from "Milestone Progress" into two distinct widgets
+- Stop ProjectBrain duplicating task ID/title
+- Make Recommendation generic (never restate task title)
+- Zero parser changes — pure IA correction only
+
+### Completed Work
+- Added `CurrentTask` type to types.ts, added to `ProjectState`
+- `DashboardService.computeCurrentTask()` — composes from milestone + brain data
+- "Current Milestone" widget renamed to "Milestone Progress" (same logic, renamed header)
+- New `CurrentTask.tsx` widget — shows task ID, title, sprint, phase (no progress bar)
+- `ProjectBrain.tsx` — removed milestone line, shows only sprint goal + context
+- `TodaysRecommendation.tsx` — static "Continue current work." text (no `{milestone}` substitution)
+- i18n: added `currentTask` + `milestoneProgress` keys, updated `continueMilestone` (en + zh-CN)
+- `docs/dashboard-information-architecture.md` — responsibility matrix for every Dashboard section
+
+### Files Created/Modified
+| File | Action |
+|------|--------|
+| `src/main/dashboard/types.ts` | Modified |
+| `src/main/dashboard/DashboardService.ts` | Modified |
+| `src/renderer/components/CurrentTask.tsx` | Created |
+| `src/renderer/components/CurrentMilestone.tsx` | Modified |
+| `src/renderer/components/Dashboard.tsx` | Modified |
+| `src/renderer/components/ProjectBrain.tsx` | Modified |
+| `src/renderer/components/TodaysRecommendation.tsx` | Modified |
+| `src/renderer/i18n/types.ts` | Modified |
+| `src/renderer/i18n/en.ts` | Modified |
+| `src/renderer/i18n/zh-CN.ts` | Modified |
+| `docs/dashboard-information-architecture.md` | Created |
+| `docs/10_CHANGELOG.md` | Modified |
+
+### Verification Results
+- `npm run typecheck` — zero errors
+- `npm run build` — 40 main modules, 1135 client modules, clean
+
+### Architecture Notes
+- Zero parser changes — no TodoParser, BrainFocusSync, or regex modifications
+- `CurrentTask` pre-computed by DashboardService from existing milestone + brain data
+- Widgets render from pre-computed data, never derive from raw fields
+- File kept as `CurrentMilestone.tsx` (git-friendly rename deferred)
+
+---
+
+## 2026-07-01 — M13: Development Intelligence — Construction Step 1 (Domain Layer)
+
+### Objectives
+- Implement the complete Domain Layer for Development Intelligence subsystem
+- Create all frozen types, interfaces, union types, and pure utilities
+- Follow `architecture/16_DEVELOPMENT_INTELLIGENCE.md` Section 3 exactly
+- Zero Dashboard integration, zero UI, zero Provider composition
+
+### Completed Work
+- Created `src/shared/development/types.ts` — complete frozen domain types:
+  - 15 interfaces: `DevelopmentState` (top-level aggregate with 9 fields), `DevelopmentMilestone`, `DevelopmentSprint`, `WorkingSet` (8 fields with lifecycle), `WorkingSetMember`, `ChangedFile`, `RelatedDocument`, `SuggestedCommitScope`, `CommitGroup`, `DevelopmentWarning`, `CompletionEstimate`, `UncommittedRisk`
+  - 7 union types: `WorkingSetPhase` (6 states: forming→active→stabilizing→review→committed→abandoned), `FileClassification` (core/support/incidental/unknown), `FileChangeType` (modified/added/deleted/renamed/untracked), `DocRelationship` (6 doc types), `WarningCategory` (7 categories), `WarningSeverity` (info/warn/error), `RiskLevel` (low/medium/high)
+  - 1 pure utility: `createWorkingSetId(milestoneId: string): string` → deterministic `ws-{milestoneId}` derivation
+- Zero Electron/Node.js/React imports — pure TypeScript
+- Follows Shared Resource Model pattern (`src/shared/`) — accessible to Main and Renderer
+- All types are JSON-serializable (no Maps, no Sets, no functions)
+- Every field has explicit type annotation; no `any` type
+
+### Files Created/Modified
+| File | Action |
+|------|--------|
+| `src/shared/development/types.ts` | Created (210 lines, 9KB) |
+| `.hermes/plans/2026-07-01_M13-domain-layer.md` | Created (plan) |
+| `docs/10_CHANGELOG.md` | Modified (+M13 Domain Layer entry) |
+| `logs/development.md` | Modified (this entry) |
+
+### Verification Results
+- `npm run typecheck` — zero errors
+- `npm run build` — 40 main modules, 1135+ client modules, clean
+- No new npm dependencies
+- No circular imports (verified: `src/shared/development/types.ts` imports nothing)
+- No Electron/Node/React imports in new file
+
+### Architecture Notes
+- Domain layer is frozen per architecture Section 8 — no future changes without ADR
+- `WarningSeverity` and `RiskLevel` extracted from inline unions for reuse across interfaces
+- Dependency graph begins here: all future engines depend only on this file
+- `DevelopmentState` is the contract boundary between Infrastructure (produces) and Presentation (consumes)
+- File follows `src/shared/` conventions: `=====` header, `---` section separators, JSDoc on all exports
+
+### Next Step
+M13 Construction Step 2: `ProviderData` input type + pure logic engines (FileClassifier, DocCouplingEngine, WarningAnalyzer, CompletionAnalyzer, CommitAnalyzer, RiskAnalyzer, WorkingSetEngine)
+
+---
+
+## 2026-07-01 — M13 Construction Step 2: Pure Analysis Engines
+
+### Objectives
+- Implement ALL pure analysis engines as defined in `architecture/17_DEVELOPMENT_INTELLIGENCE_IMPLEMENTATION.md` Step 3–5
+- Do NOT implement DevelopmentIntelligenceService
+- Do NOT implement Dashboard integration or Provider access
+- Every engine: pure functions only — zero state, zero IO, zero cache, zero logging
+
+### Completed Work
+
+Created 8 pure analysis engines in `src/main/development/`:
+
+| File | Exported Function | Lines |
+|------|------------------|-------|
+| `FileClassifier.ts` | `classifyFile(path, changeType, milestoneId, brain?)` → `FileClassification` | 173 |
+| `DocCouplingEngine.ts` | `findRelatedDocuments(changedPaths, workspaceRoot)` → `RelatedDocument[]` | 190 |
+| `WarningAnalyzer.ts` | `analyzeWarnings(workingSet, changedFiles, relatedDocuments)` → `DevelopmentWarning[]` | 280 |
+| `CompletionAnalyzer.ts` | `estimateCompletion(milestone, workingSet)` → `CompletionEstimate` | 96 |
+| `CommitAnalyzer.ts` | `analyzeCommitScope(workingSet, changedFiles, relatedDocuments)` → `SuggestedCommitScope` | 256 |
+| `RiskAnalyzer.ts` | `analyzeRisks(workingSet, warnings)` → `UncommittedRisk[]` | 186 |
+| `WorkingSetEngine.ts` | `deriveWorkingSet(changedFiles, milestone)` → `WorkingSet` | 236 |
+| `ProjectActivity.ts` | `toProjectActivity(state)` → `ProjectActivity` | 144 |
+
+Engine details:
+
+**FileClassifier**: Priority-based classification using milestone path patterns (M5–M13), brain architecture module mapping, support/doc path heuristics. Returns `core` | `support` | `incidental` | `unknown`.
+
+**DocCouplingEngine**: 18 coupling rules mapping source paths to documentation (architecture docs, CHANGELOG, TODO, brain files, principles). Deduplicates by (sourcePath, docPath, relationship) tuple.
+
+**WarningAnalyzer**: Six detection functions — contamination (multiple milestones), orphan-changes (no milestone), missing-tests (source changed, test absent), missing-docs (related doc not modified), forgotten-files (expected pairs absent), large-change (>15 files).
+
+**CompletionAnalyzer**: Weighted formula (60% task + 40% file coverage) producing percentage 0–100 with human-readable label.
+
+**CommitAnalyzer**: Groups files by conventional commit type (feat/fix/refactor/docs/test/chore), generates suggested commit messages with derived scope and summary. Detects orphan files and likely-forgotten files using test/doc path inference.
+
+**RiskAnalyzer**: Maps each warning category to risk template (description, default severity, mitigation). Severity escalation for error-level warnings and large working sets. Also detects working-set-inherent risks (unknowns, incidentals, abandoned).
+
+**WorkingSetEngine**: Composes FileClassifier to classify each changed file, detects test/doc companions, derives phase (forming→active→stabilizing→review) from classification ratios and task progress, computes commit readiness with specific blocker reasons.
+
+**ProjectActivity**: Transforms DevelopmentState into compact Dashboard card display format with active working set summary, completion percentage, priority warning, and next action recommendation.
+
+### Verification Results
+- `npm run typecheck` — zero errors
+- `npm run build` — 40 main modules, 1135+ client modules, clean
+- No new npm dependencies
+- Zero circular dependencies (WorkingSetEngine → FileClassifier only)
+- All engines are pure functions: no classes, no state, no IO, no providers
+
+### Architecture Notes
+- All engines depend only on `src/shared/development/types.ts`
+- FileClassifier additionally reads `BrainArchitecture` from `src/main/dashboard/types.ts` (type-only import)
+- ModuleResolution requires `.js` extensions on all relative imports (Node16)
+- DevelopmentIntelligenceService intentionally NOT implemented — deferred to Construction Step 3
+- All engines are independently testable with mock data
+- Follows architecture Section 1.3 pure logic module contract exactly
+
+### Next Step
+M13 Construction Step 3: DevelopmentIntelligenceService composition hub + ProviderData input type
+
+---
+
+## 2026-07-01 — M13 Construction Step 3: DevelopmentIntelligenceService
+
+### Objectives
+- Implement DevelopmentIntelligenceService — pure composition hub
+- Create ProviderData input contract
+- Wire into DashboardService (optional composition, graceful degradation)
+
+### Completed Work
+- Created `src/main/development/types.ts` — `ProviderData` interface (workingTree, milestone, brain)
+- Created `src/main/development/DevelopmentIntelligenceService.ts` — `computeState(input) → DevelopmentState`
+  - Pure composition: zero business logic, zero IO, zero state, zero cache
+  - Parses milestone/sprint identity from MilestoneProgress + BrainData
+  - Derives ChangedFile[] from raw Git status strings (WorkingTree.files)
+  - Delegates to all 6 pure engines in order: WorkingSetEngine → DocCouplingEngine → WarningAnalyzer → CompletionAnalyzer → CommitAnalyzer → RiskAnalyzer
+  - Assembles complete DevelopmentState with all 9 fields
+- Added `developmentState?: DevelopmentState` optional field to `ProjectState`
+- Integrated into `DashboardService.computeDevelopmentState()` with try/catch graceful degradation
+- Service receives workspaceRoot via constructor (configuration, not IO)
+- DevelopmentIntelligenceService never calls GitProvider, TodoProvider, or BrainProvider directly
+
+### Files Created/Modified
+| File | Action |
+|------|--------|
+| `src/main/development/types.ts` | Created |
+| `src/main/development/DevelopmentIntelligenceService.ts` | Created |
+| `src/main/dashboard/types.ts` | Modified (added import + developmentState field) |
+| `src/main/dashboard/DashboardService.ts` | Modified (imports + devIntel instance + computeDevelopmentState) |
+| `docs/10_CHANGELOG.md` | Updated |
+| `logs/development.md` | Updated |
+
+### Verification Results
+- `npm run typecheck` — zero errors
+- `npm run build` — 49 main modules (up from 40), 120 kB main, clean
+- No new npm dependencies
+- Zero breaking changes to existing IPC, handlers, renderer, or widgets
+- All new modules follow Node16 module resolution (.js extensions)
+
+### Architecture Notes
+- Dependency graph strictly downward: Domain (shared types) → Infrastructure (engines → service) → DashboardService
+- No cycles: providers never import development/, renderer never imports development/
+- DashboardService remains the sole integrator
+- DevelopmentState is always complete (arrays may be empty, but no field is null)
+- Handles all-null provider data gracefully with sensible defaults (id="—", phase=0, etc.)
+- DocCouplingEngine workspaceRoot is configuration string, not filesystem IO
+
+---
+
+## 2026-07-01 — Milestone 13 Construction Step 4: DevelopmentState Verification
+
+### Objectives
+- Document every field of DevelopmentState with source, engine, meaning, and consumer
+- Create a DevelopmentState inspector utility (code-callable, not UI)
+- Cross-validate all fields: no duplicates, no missing, no impossible, no contradictory state
+- Declare DevelopmentState stable for Dashboard integration
+
+### Completed Work
+- Created `docs/development-state-validation.md` — complete field-level audit:
+  - All 9 DevelopmentState fields documented with sub-field tables
+  - Composition pipeline diagram showing data flow through all engines
+  - Cross-validation matrix: 4 categories × multiple checks each
+  - 8 edge cases verified (all-null, clean tree, untracked, single-unknown, mixed-milestones, complete, large-WS, missing-tests)
+  - Dashboard integration readiness declaration
+  - Stability declaration
+- Created `src/main/development/DevelopmentStateInspector.ts` — development utility:
+  - `formatDevelopmentState(state)` — pure formatter returning formatted ASCII string
+  - `inspectFromProviderData(input)` — accepts ProviderData, computes via service, formats
+  - `inspectDevelopmentState(input)` — overloaded: accepts DevelopmentState or ProviderData
+  - Built-in cross-validation section with 7 assertions
+  - Boxed ASCII output format with all 9 sections
+- Verified: zero Dashboard changes, zero Renderer changes, zero Widget changes
+
+### Files Created/Modified
+| File | Action |
+|------|--------|
+| `docs/development-state-validation.md` | Created |
+| `src/main/development/DevelopmentStateInspector.ts` | Created |
+| `docs/10_CHANGELOG.md` | Updated |
+| `logs/development.md` | Updated |
+
+### Verification Results
+- `npm run typecheck` — zero errors
+- `npm run build` — successful (120 kB main, clean)
+- No Dashboard changes, no Renderer changes, no Widget changes
+- All new modules follow Node16 module resolution (.js extensions)
+- DevelopmentStateInspector is pure — zero side effects, no mutation, no IO
+
+### Architecture Notes
+- Inspector lives in Infrastructure layer — same directory as other engines
+- Inspector depends on DevelopmentIntelligenceService (for ProviderData path) and shared types
+- No new dependencies — all imports from within development/ module or shared/
+- Inspector is NOT registered as a DI service — it's a standalone utility function
+- DevelopmentState is now FROZEN and STABLE — Dashboard integration may proceed with zero additional business logic
+
+---
+
+## 2026-07-01 — M13 Construction Step 5: Dashboard Integration
+
+### Objectives
+- Refactor Dashboard widgets to consume DevelopmentState where appropriate
+- Ensure Dashboard contains zero business logic
+- Verify every interpretation originates inside DevelopmentState
+- Create acceptance document for Development Intelligence
+
+### Completed Work
+
+**Widget Refactoring:**
+
+| Widget | Before | After |
+|--------|--------|-------|
+| IsHealthy | `ProjectState.status` (workingTree + build) | `DevelopmentState` (completion, warnings, commit readiness, risks) |
+| TodaysRecommendation | `ProjectState.status.recommendationType` | `DevelopmentState.workingSet.phase` → phase-based recommendation |
+| RecentActivity | `ProjectState.recent` (commits + sessions) | `DevelopmentState.changedFiles` + `relatedDocuments` |
+
+**i18n:**
+
+- Added 21 new i18n keys under `dashboard.*` for Development Intelligence display
+- English (`en.ts`) and zh-CN (`zh-CN.ts`) translations complete
+- Types updated in `types.ts`
+
+**Acceptance Document:**
+
+- Created `docs/development-intelligence-acceptance.md` — verifies all 6 architecture phases
+
+### Files Created/Modified
+| File | Action |
+|------|--------|
+| `src/renderer/components/IsHealthy.tsx` | Rewritten |
+| `src/renderer/components/TodaysRecommendation.tsx` | Rewritten |
+| `src/renderer/components/RecentActivity.tsx` | Rewritten |
+| `src/renderer/components/Dashboard.tsx` | Modified |
+| `src/renderer/i18n/types.ts` | Modified |
+| `src/renderer/i18n/en.ts` | Modified |
+| `src/renderer/i18n/zh-CN.ts` | Modified |
+| `docs/10_CHANGELOG.md` | Updated |
+| `docs/development-intelligence-acceptance.md` | Created |
+| `logs/development.md` | Updated |
+
+### Verification Results
+- `npm run typecheck` — zero errors
+- `npm run build` — 49 main modules, 1135 client modules, clean
+- Dashboard contains zero business logic — all values read directly from DevelopmentState
+- No widget calls any engine, derives warnings, derives completion, or derives commit readiness
+- Graceful degradation: widgets show "not yet available" when developmentState is undefined
+
+### Architecture Notes
+- Development Intelligence (M13) is now COMPLETE
+- Future consumers: Dashboard (complete), AI Runtime, Command Palette, Workflow Engine, Session
+- Zero technical debt — all engines are pure, all types are frozen, all layers isolated
+- Dashboard is now a pure presentation layer for both ProjectState and DevelopmentState
+
+---
+
+## 2026-07-01 — M12 Code Manipulation Foundation
+
+### Objectives
+- Establish write audit trail recording every disk mutation through the single write gate
+- Implement pure diff computation (LCS-based line diff)
+- Wire editor.open / editor.save / editor.diff commands through EditorHandler
+- Replace "Editor not implemented" placeholder with working textarea editor
+
+### Completed Work
+
+**Write Audit:**
+- `src/shared/editor/audit.ts` — `WriteAuditEntry`, `WriteOperation` shared types
+- `src/main/workspace/WriteAuditTrail.ts` — in-memory circular buffer (1000 entries), queries: `recent()`, `since()`, `forPath()`
+- Integrated into `WorkspaceProvider` single write gate: `writeFile`, `mkdir`, `delete`, `copy` record audit entries
+- Exposed via `WorkspaceService.getAuditTrail()`
+
+**Diff Computation:**
+- `src/shared/editor/diff.ts` — `DiffHunk`, `DiffLine`, `DiffResult` shared types
+- `src/main/editor/DiffComputer.ts` — pure LCS-based line diff; `computeDiff(old, new)` returns `DiffHunk[]`; `computeFileDiff(path, old, new)` returns `DiffResult`
+
+**Editor Commands:**
+- `src/main/runtime/commands/handlers/EditorHandler.ts` — handles `editor.open` (read FileNode + content from disk), `editor.save` (write through WorkspaceService single gate), `editor.diff` (compute diff against disk version)
+- Registered 4 editor commands in `DefaultCommandRegistry`: `editor.open`, `editor.save`, `editor.diff`, `editor.apply-patch` (skeleton)
+- Wired EditorHandler in `main/index.ts` with 3 handler registrations
+
+**Editor UI:**
+- EditorPanel replaced "Editor not implemented" with functional textarea
+- EditorToolbar: working Save/Saved button with dirty indicator (● yellow dot)
+- Ctrl+S / Cmd+S keyboard shortcut wired in EditorPanel
+- EditorStore extended with `currentContent`, `originalContent`, `dirty`, `saving`, `saveError` state
+- Content loading: `documentBridge("editor.open")` → IPC → EditorHandler → WorkspaceService.readFileNode
+- Content saving: `documentBridge("editor.save")` → IPC → EditorHandler → WorkspaceService.writeFile (single write gate + audit)
+
+**Command System:**
+- `CommandContext` extended with `args?: Record<string, unknown>`
+- `ipcMain.handle("command:execute")` passes raw args through to handlers
+
+### Files Created/Modified
+
+| File | Action |
+|------|--------|
+| `src/shared/editor/audit.ts` | Create — WriteAuditEntry + WriteOperation types |
+| `src/shared/editor/diff.ts` | Create — DiffHunk, DiffLine, DiffResult types |
+| `src/main/workspace/WriteAuditTrail.ts` | Create — In-memory audit trail |
+| `src/main/editor/DiffComputer.ts` | Create — Pure LCS diff function |
+| `src/main/runtime/commands/handlers/EditorHandler.ts` | Create — editor.open/save/diff |
+| `src/main/workspace/WorkspaceProvider.ts` | Modify — Inject WriteAuditTrail, record on write/delete/mkdir/copy |
+| `src/main/workspace/WorkspaceService.ts` | Modify — Own WriteAuditTrail, expose getAuditTrail() |
+| `src/main/runtime/commands/DefaultCommandRegistry.ts` | Modify — Add 4 editor commands |
+| `src/main/index.ts` | Modify — Import + register EditorHandler, pass args through |
+| `src/shared/command/types.ts` | Modify — Add args to CommandContext |
+| `src/renderer/stores/editor.ts` | Rewrite — Content/save/dirty state + save flow |
+| `src/renderer/components/editor/EditorPanel.tsx` | Rewrite — Textarea editor + Ctrl+S |
+| `src/renderer/components/editor/EditorToolbar.tsx` | Rewrite — Working Save button + dirty indicator |
+| `docs/09_TODO.md` | Modify — M12 and M13 marked complete |
+| `docs/10_CHANGELOG.md` | Modify — M12 entry |
+| `logs/development.md` | Modify — M12 entry |
+
+### Verification Results
+- `npm run typecheck` — zero errors
+- `npm run build` — 54 main modules (+5), 1139 client modules, clean
+- Write audit: records on writeFile (create/update), mkdir (create), delete (delete), copy (create)
+- Diff computation: pure function, zero IO, LCS O(n*m), works on any two strings
+- Editor save flow: Renderer → documentBridge → IPC → EditorHandler → WorkspaceService → WorkspaceProvider (single write gate + audit)
+- Architecture: zero layer violations — EditorHandler never touches DocumentStore, EditorStore never touches WorkspaceProvider
+
+### Architecture Notes
+- Code Manipulation Foundation (M12) is now COMPLETE
+- Write audit trail records every disk mutation — ready for change tracking, undo, and external change detection
+- DiffComputer is pure and reusable — can be called by AI agents via editor.diff command, by future patch application, by workspace change detection
+- Editor UI is functional: open file → see content in textarea → edit → Save → written through single write gate with audit
+- Out of scope for M13+: undo/redo, external change detection, auto-save, patch application, Monaco/CodeMirror
+
+---
+
+## 2026-07-01 — Sprint 5: Diff View + Accept/Reject + Patch Application
+
+### Objectives
+- Implement Diff View — render DiffHunk[] as a unified diff with colored lines
+- Implement Accept/Reject — per-hunk and full-file accept/reject operations
+- Implement Patch Application — parse and apply unified diff patches
+
+### Completed Work
+- Created `src/renderer/components/editor/DiffView.tsx` — Pure component rendering DiffResult as unified diff with:
+  - Color-coded lines (green=added, red=removed, gray=context)
+  - Line number columns (old/new)
+  - Hunk headers with @@ -l,s +l,s @@ format
+  - Interactive mode: Accept/Reject buttons per hunk + Accept All/Reject All
+- Extended `EditorStore` with diff state (diffResult, diffVisible, diffError, processingHunks) and actions:
+  - `diff()` — calls editor.diff command, stores result, shows diff view
+  - `hideDiff()` — returns to editor textarea
+  - `acceptHunk(hunkIndex)` — applies hunk changes to currentContent, removes from diff
+  - `rejectHunk(hunkIndex)` — reverts hunk changes, removes from diff
+  - `acceptAll()` — applies all hunks, closes diff
+  - `rejectAll()` — reverts to originalContent, closes diff
+  - `applyPatch(patch)` — calls editor.apply-patch command
+- Added `applyHunk()` pure helper function — reconstructs content by applying/rejecting DiffHunk lines
+- Updated `EditorPanel.tsx` — toggles between textarea (edit mode) and DiffView (diff mode)
+- Updated `EditorToolbar.tsx` — added Diff/Edit toggle button
+- Extended `EditorHandler` with `editor.apply-patch` handler + `applyUnifiedPatch()` pure function:
+  - Parses unified diff format (@@ -l,s +l,s @@)
+  - Validates and applies line changes
+  - Returns new content without writing to disk
+- Wired `editor.apply-patch` handler in `main/index.ts`
+
+### Files Created
+| File | Description |
+|------|-------------|
+| `src/renderer/components/editor/DiffView.tsx` | Unified diff renderer with accept/reject UI |
+
+### Files Modified
+| File | Description |
+|------|-------------|
+| `src/renderer/stores/editor.ts` | Added diff state, accept/reject, applyPatch + applyHunk helper |
+| `src/renderer/components/editor/EditorPanel.tsx` | Diff/edit view toggle integration |
+| `src/renderer/components/editor/EditorToolbar.tsx` | Added Diff/Edit toggle button |
+| `src/main/runtime/commands/handlers/EditorHandler.ts` | Added editor.apply-patch handler + unified patch parser |
+| `src/main/index.ts` | Wired editor.apply-patch handler |
+| `docs/09_TODO.md` | Marked Sprint 5 items complete |
+
+### Verification Results
+- `npm run typecheck` — zero errors
+- `npm run build` — 54 main modules, 1140 client modules, clean
+- Architecture: zero layer violations — DiffView is pure presentational, EditorStore owns all diff state, EditorHandler is the single IPC gateway
+
+## 2026-07-01 — Code Hygiene: Dead Code Removal + Agent Agnosticism
+
+### Objectives
+- Remove dead stub code leftover from Phase 1
+- Eliminate hardcoded `"hermes"` adapter names from renderer and main process
+- Clean up stale M11d.2-era comments
+
+### Completed Work
+- **Deleted** `src/renderer/runtime/echo-runtime.ts` — Phase 1 EchoRuntime stub (29 lines), zero references since M4 introduced ProcessAgentRuntime
+- **Fixed renderer hardcoding:** `src/renderer/stores/session.ts:56` — `session.create("hermes")` → `session.create()` (no adapter name in renderer)
+- **Fixed preload API:** `src/preload/index.ts:62` — `create(adapter)` → `create(adapter?)` (adapter is optional)
+- **Fixed type declaration:** `src/renderer/env.d.ts:262` — `create: (adapter?: string)` (matches preload contract)
+- **Fixed main process hardcoding (agent:send):** `src/main/index.ts:142` — hardcoded `"hermes"` → `runtimeManager.listAdapters()[0]?.id ?? "hermes"`
+- **Fixed main process hardcoding (session:create):** `src/main/index.ts:163` — handler defaults to first available adapter when none provided
+- **Fixed SessionHandler:** `src/main/runtime/commands/handlers/SessionHandler.ts:29` — meaningless ternary `x ? "hermes" : "hermes"` → `runtimeManager.listAdapters()[0]?.id ?? "hermes"`
+- **Cleaned DefaultCommandRegistry:** removed stale M11d.2 "metadata only — no implementations" comments; updated `editor.apply-patch` description from "(skeleton)" to actual capability
+
+### Files Changed
+| File | Action |
+|------|--------|
+| `src/renderer/runtime/echo-runtime.ts` | Deleted |
+| `src/renderer/stores/session.ts` | Modify — remove hardcoded adapter name |
+| `src/preload/index.ts` | Modify — adapter param made optional |
+| `src/renderer/env.d.ts` | Modify — adapter param made optional in type |
+| `src/main/index.ts` | Modify — resolve default adapter dynamically |
+| `src/main/runtime/commands/handlers/SessionHandler.ts` | Modify — import runtimeManager, resolve default |
+| `src/main/runtime/commands/DefaultCommandRegistry.ts` | Modify — stale comments updated |
+| `docs/10_CHANGELOG.md` | Modify — Code Hygiene entry |
+| `logs/development.md` | Modify — this entry |
+
+### Verification Results
+- `npm run typecheck` — zero errors
+- `npm run build` — 54 main modules, 1140 client modules, clean
+- Agent agnosticism improved: renderer no longer references any concrete adapter name
+- Architecture: zero new layer violations — SessionHandler imports runtimeManager (Infrastructure → Infrastructure, same layer)

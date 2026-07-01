@@ -17,6 +17,10 @@ import { DashboardHandler } from "./runtime/commands/handlers/DashboardHandler.j
 import { WorkspaceHandler } from "./runtime/commands/handlers/WorkspaceHandler.js";
 import { PreviewHandler } from "./runtime/commands/handlers/PreviewHandler.js";
 import { RuntimeHandler } from "./runtime/commands/handlers/RuntimeHandler.js";
+import { DocumentHandler } from "./runtime/commands/handlers/DocumentHandler.js";
+import { EditorHandler } from "./runtime/commands/handlers/EditorHandler.js";
+import { SessionHandler } from "./runtime/commands/handlers/SessionHandler.js";
+import { SettingsHandler } from "./runtime/commands/handlers/SettingsHandler.js";
 import type { CommandContext } from "../shared/command/types.js";
 
 const workspaceIndexStore = new WorkspaceIndexStore(workspaceService);
@@ -27,11 +31,24 @@ const commandRegistry = new CommandRegistry();
 registerDefaultCommands(commandRegistry);
 
 const commandExecutor = new CommandExecutor(commandRegistry);
-commandExecutor.registerHandler("dashboard.refresh", new DashboardHandler());
+commandExecutor.registerHandler("dashboard.refresh", new DashboardHandler(workspaceIndexStore));
 commandExecutor.registerHandler("dashboard.open", new DashboardHandler());
-commandExecutor.registerHandler("workspace.refreshIndex", new WorkspaceHandler(workspaceIndexStore));
+commandExecutor.registerHandler("workspace.refreshIndex", new WorkspaceHandler(workspaceIndexStore, searchProvider));
+commandExecutor.registerHandler("workspace.openFile", new WorkspaceHandler(workspaceIndexStore, searchProvider));
+commandExecutor.registerHandler("workspace.search", new WorkspaceHandler(workspaceIndexStore, searchProvider));
 commandExecutor.registerHandler("preview.close", new PreviewHandler());
 commandExecutor.registerHandler("runtime.runChecks", new RuntimeHandler());
+commandExecutor.registerHandler("document.ensure", new DocumentHandler());
+commandExecutor.registerHandler("document.activate", new DocumentHandler());
+commandExecutor.registerHandler("document.reveal", new DocumentHandler());
+commandExecutor.registerHandler("document.close", new DocumentHandler());
+commandExecutor.registerHandler("editor.open", new EditorHandler());
+commandExecutor.registerHandler("editor.save", new EditorHandler());
+commandExecutor.registerHandler("editor.diff", new EditorHandler());
+commandExecutor.registerHandler("editor.apply-patch", new EditorHandler());
+commandExecutor.registerHandler("session.open", new SessionHandler());
+commandExecutor.registerHandler("session.new", new SessionHandler());
+commandExecutor.registerHandler("settings.language", new SettingsHandler(setLanguage));
 
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 
@@ -122,7 +139,11 @@ ipcMain.on("agent:send", async (_event, prompt: string, sessionId?: string) => {
     runtimeState = (session?.meta.runtimeState as Record<string, unknown>) ?? {};
   }
 
-  await runtimeManager.run("hermes", prompt, runtimeState, (agentEvent: AgentEvent) => {
+  await runtimeManager.run(
+    runtimeManager.listAdapters()[0]?.id ?? "hermes",
+    prompt,
+    runtimeState,
+    (agentEvent: AgentEvent) => {
     win.webContents.send("agent:event", agentEvent);
   });
 
@@ -143,8 +164,10 @@ ipcMain.on("agent:abort", () => {
 // IPC: Session Management
 // ============================================================
 
-ipcMain.handle("session:create", (_event, adapter: string) => {
-  return sessionStore.createSession(adapter);
+ipcMain.handle("session:create", (_event, adapter?: string) => {
+  return sessionStore.createSession(
+    adapter ?? runtimeManager.listAdapters()[0]?.id ?? "hermes",
+  );
 });
 
 ipcMain.handle("session:list", () => {
@@ -271,9 +294,22 @@ ipcMain.handle("config:set", (_event, key: string, value: unknown) => {
 // IPC: Command System
 // ============================================================
 
+ipcMain.handle("command:list", () => {
+  // Return all commands as serializable CommandMeta (no functions)
+  return commandRegistry.list().map((cmd) => ({
+    id: cmd.id,
+    title: cmd.title,
+    description: cmd.description,
+    category: cmd.category,
+    keywords: cmd.keywords,
+    shortcut: cmd.shortcut,
+  }));
+});
+
 ipcMain.handle("command:execute", async (_event, commandId: string, args?: Record<string, unknown>) => {
   const context: CommandContext = {
     currentView: "dashboard", // default; may be overridden by UI in future
+    args, // Pass raw args to handlers
   };
   if (args?.selectedFile && typeof args.selectedFile === "string") {
     context.selectedFile = args.selectedFile;

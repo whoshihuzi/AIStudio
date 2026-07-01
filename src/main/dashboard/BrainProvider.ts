@@ -1,7 +1,11 @@
 // ============================================================
 // BrainProvider — reads structured Project Brain from
 // workspace/brain/*.json. Each file has a strict schema.
-// Returns defaults if files don't exist yet.
+// Auto-syncs currentFocus from TODO.md when available.
+//
+// M12.6.6: BrainFocusSync now writes current-focus.json
+// directly, so readCurrentFocus reads the file as the
+// single source of truth (no more in-memory-only fallback).
 // ============================================================
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "fs";
@@ -10,8 +14,10 @@ import type {
   BrainData, BrainProject, BrainArchitecture,
   BrainDecisions, BrainCurrentFocus,
 } from "./types.js";
+import { parseCurrentFocusFromTodo } from "./BrainFocusSync.js";
 
 const BRAIN_DIR = join(process.cwd(), "workspace", "brain");
+const FOCUS_FILE = join(BRAIN_DIR, "current-focus.json");
 
 export class BrainProvider {
   // ----------------------------------------------------------
@@ -23,7 +29,7 @@ export class BrainProvider {
       project: this.readJson<BrainProject>("project.json", this.defaultProject()),
       architecture: this.readJson<BrainArchitecture>("architecture.json", this.defaultArchitecture()),
       decisions: this.readJson<BrainDecisions>("decisions.json", this.defaultDecisions()),
-      currentFocus: this.readJson<BrainCurrentFocus>("current-focus.json", this.defaultFocus()),
+      currentFocus: this.readCurrentFocus(),
     };
   }
 
@@ -38,7 +44,21 @@ export class BrainProvider {
     this.seedIfMissing("project.json", this.defaultProject());
     this.seedIfMissing("architecture.json", this.defaultArchitecture());
     this.seedIfMissing("decisions.json", this.defaultDecisions());
-    this.seedIfMissing("current-focus.json", this.defaultFocus());
+    // current-focus.json: sync from TODO.md if missing
+    if (!existsSync(FOCUS_FILE)) {
+      const synced = parseCurrentFocusFromTodo() ?? {
+        milestone: "—",
+        sprint: "—",
+        goal: "No TODO.md found.",
+        startedAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      // parseCurrentFocusFromTodo may have already written it.
+      // Write only if it still doesn't exist (race-safe double check).
+      if (!existsSync(FOCUS_FILE)) {
+        writeFileSync(FOCUS_FILE, JSON.stringify(synced, null, 2), "utf-8");
+      }
+    }
   }
 
   // ----------------------------------------------------------
@@ -79,10 +99,9 @@ export class BrainProvider {
   private defaultArchitecture(): BrainArchitecture {
     return {
       layers: [
-        { name: "Presentation", path: "src/renderer/components/", status: "stable" },
-        { name: "Application", path: "src/renderer/stores/", status: "stable" },
-        { name: "Domain", path: "src/renderer/runtime/types.ts", status: "stable" },
-        { name: "Infrastructure", path: "src/main/runtime/", status: "stable" },
+        { name: "Presentation", path: "src/renderer/", status: "stable" },
+        { name: "Domain", path: "src/shared/", status: "stable" },
+        { name: "Infrastructure", path: "src/main/", status: "stable" },
       ],
       keyAbstractions: [
         { name: "IAgentRuntime", file: "src/renderer/runtime/types.ts", description: "Agent interface boundary — Renderer never imports concrete adapters" },
@@ -104,13 +123,28 @@ export class BrainProvider {
     };
   }
 
-  private defaultFocus(): BrainCurrentFocus {
-    return {
-      milestone: "M11c — Command System Architecture Freeze",
-      sprint: "Command System",
-      goal: "Unify all interaction (UI, keyboard, AI, plugins) through a single Command abstraction",
+  // ----------------------------------------------------------
+  // Current Focus — synced from TODO.md at read time
+  // ----------------------------------------------------------
+
+  /**
+   * M12.6.6: parseCurrentFocusFromTodo() now writes current-focus.json
+   * on every successful parse. We read from the file as the single
+   * source of truth, falling back to a live parse only if the file
+   * is missing. No more in-memory-only divergence.
+   */
+  private readCurrentFocus(): BrainCurrentFocus {
+    // Always re-sync on read so the file stays fresh
+    const synced = parseCurrentFocusFromTodo();
+    if (synced) return synced;
+
+    // TODO.md unavailable — read existing file or return default
+    return this.readJson<BrainCurrentFocus>("current-focus.json", {
+      milestone: "—",
+      sprint: "—",
+      goal: "No TODO.md found. Create one to track progress.",
       startedAt: Date.now(),
       updatedAt: Date.now(),
-    };
+    });
   }
 }

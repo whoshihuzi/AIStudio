@@ -28,7 +28,7 @@ AI-assisted software companies.
 
 # Core Experience
 
-The product revolves around six major workspaces.
+The product revolves around several major workspaces.
 
 ## Workspace
 
@@ -37,6 +37,12 @@ Browse project files.
 Open folders.
 
 Track modifications.
+
+File operations (create, rename, delete, copy, move).
+
+Preview files.
+
+Open in Editor.
 
 ---
 
@@ -54,6 +60,30 @@ History.
 
 ---
 
+## Dashboard (v0.2.0+)
+
+Project health overview.
+
+Milestone progress.
+
+Development Intelligence.
+
+Current task + next action.
+
+---
+
+## Editor (v0.3.0+)
+
+Edit project files.
+
+Diff comparison.
+
+Patch application.
+
+Single write gate with audit trail.
+
+---
+
 ## Console
 
 Display live execution.
@@ -68,37 +98,13 @@ Errors.
 
 ---
 
-## Tasks
+## Command Palette (v0.3.0+)
 
-Current work.
+Quick command execution (Ctrl+P / Ctrl+K).
 
-Pending work.
+Search across all registered commands.
 
-Future work.
-
----
-
-## Agents
-
-Manage available AI agents.
-
-Switch between providers.
-
-Future Multi-Agent support.
-
----
-
-## Settings
-
-Workspace configuration.
-
-Themes.
-
-Model configuration.
-
-Paths.
-
-Plugins.
+Keyboard shortcut discovery.
 
 ---
 

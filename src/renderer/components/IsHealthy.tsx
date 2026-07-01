@@ -1,50 +1,127 @@
 // ============================================================
-// IsHealthy — project health section.
+// IsHealthy — Development Health from DevelopmentState (M13.5)
+//
+// Consumes DevelopmentState fields directly. No interpretation.
+// No derivation. No business logic.
+//
+// Shows: completion %, warnings, commit readiness, risks.
+// All values pre-computed by DevelopmentIntelligenceService.
 // ============================================================
 
-import { useDashboardStore, type DashboardBuildStatus } from "@/stores/dashboard";
 import { useTranslation } from "@/i18n/useTranslation";
 import { Card, SectionHeader } from "./ui/base";
 
-interface Props { data: DashboardRawData | null; build: DashboardBuildStatus; }
+interface Props {
+  /**
+   * DevelopmentState from projectState.
+   * When undefined, Development Intelligence is not yet available.
+   */
+  devState: DevelopmentState | undefined;
+}
 
-export function IsHealthy({ data, build }: Props) {
+export function IsHealthy({ devState }: Props) {
   const { t } = useTranslation();
-  const refreshBuild = useDashboardStore((s) => s.refreshBuild);
-  const wt = data?.workingTree;
-  const checksRun = build.typecheck !== "unknown" || build.build !== "unknown";
+
+  if (!devState) {
+    return (
+      <Card>
+        <SectionHeader title={t.dashboard.devHealth} />
+        <p className="text-gray-600 text-sm">{t.dashboard.devHealthNotAvailable}</p>
+      </Card>
+    );
+  }
+
+  const ds = devState;
+  const warnCount = ds.warnings.length;
+  const errorCount = ds.warnings.filter((w) => w.severity === "error").length;
+  const riskCount = ds.uncommittedRisks.length;
+  const highRiskCount = ds.uncommittedRisks.filter((r) => r.severity === "high").length;
+
+  // Tri-state commit readiness
+  const readiness = ds.commitReadiness;
+  const readinessLabel =
+    readiness === "ready"
+      ? t.dashboard.commitReady
+      : readiness === "almost_ready"
+        ? t.dashboard.commitAlmostReady
+        : ds.workingSet.commitBlockerReason
+          ? t.dashboard.commitNotReady.replace(
+              "{reason}",
+              ds.workingSet.commitBlockerReason ?? "unknown",
+            )
+          : t.dashboard.commitNotReady.replace("{reason}", "unknown");
 
   return (
     <Card>
-      <SectionHeader title={t.dashboard.isHealthy} />
-      <div className="space-y-3">
-        <StatusRow label={t.dashboard.workingTree} ok={wt?.isClean ?? false} okText={t.dashboard.clean}
-          badText={wt ? t.dashboard.modifiedUntracked.replace("{modified}", String(wt.modified)).replace("{untracked}", String(wt.untracked)) : t.dashboard.unknown}
-          detail={!wt?.isClean && wt ? wt.files.slice(0, 3).join(", ") + (wt.files.length > 3 ? ` +${wt.files.length - 3} more` : "") : undefined} />
-        {checksRun ? (<>
-          <StatusRow label={t.dashboard.typecheck} ok={build.typecheck === "pass"} okText={t.dashboard.passing} badText={t.dashboard.failing} />
-          <StatusRow label={t.dashboard.build} ok={build.build === "pass"} okText={t.dashboard.passing} badText={t.dashboard.failing} />
-          <button onClick={refreshBuild} className="text-xs text-blue-400 hover:text-blue-300 hover:underline">{t.dashboard.rerunChecks}</button>
-        </>) : (
-          <div className="flex items-center gap-3 text-sm">
-            <span className="text-gray-600">{t.dashboard.checksNotRun}</span>
-            <button onClick={refreshBuild} className="text-xs text-blue-400 hover:text-blue-300 hover:underline">{t.dashboard.runNow}</button>
-          </div>
+      <SectionHeader title={t.dashboard.devHealth} />
+
+      {/* Completion */}
+      <div className="mb-3">
+        <div className="flex justify-between text-xs text-gray-500 mb-1">
+          <span>{t.dashboard.completion}</span>
+          <span>{ds.completionEstimate.percentage}%</span>
+        </div>
+        <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-green-500 rounded-full transition-all duration-500"
+            style={{ width: `${ds.completionEstimate.percentage}%` }}
+          />
+        </div>
+        <div className="text-xs text-gray-600 mt-1">{ds.completionEstimate.label}</div>
+      </div>
+
+      {/* Warnings */}
+      <div className="mb-2 flex items-center gap-2 text-sm">
+        <span className={`w-4 text-center font-bold text-xs ${
+          errorCount > 0 ? "text-red-400" : warnCount > 0 ? "text-yellow-400" : "text-green-400"
+        }`}>
+          {errorCount > 0 ? "✗" : warnCount > 0 ? "!" : "✓"}
+        </span>
+        <span className="text-gray-400">
+          {t.dashboard.warningsCount
+            .replace("{count}", String(warnCount))
+            .replace("{plural}", warnCount !== 1 ? "s" : "")}
+        </span>
+        {errorCount > 0 && (
+          <span className="text-red-400 text-xs">({errorCount} error{errorCount !== 1 ? "s" : ""})</span>
+        )}
+      </div>
+
+      {/* Commit Readiness */}
+      <div className="mb-2 flex items-center gap-2 text-sm">
+        <span className={`w-4 text-center font-bold text-xs ${
+          readiness === "ready" ? "text-green-400"
+          : readiness === "almost_ready" ? "text-yellow-400"
+          : "text-red-400"
+        }`}>
+          {readiness === "ready" ? "✓" : readiness === "almost_ready" ? "~" : "✗"}
+        </span>
+        <span className="text-gray-400">{t.dashboard.commitReadiness}</span>
+        <span className={
+          readiness === "ready" ? "text-green-400"
+          : readiness === "almost_ready" ? "text-yellow-400"
+          : "text-red-400"
+        }>
+          {readinessLabel}
+        </span>
+      </div>
+
+      {/* Risks */}
+      <div className="flex items-center gap-2 text-sm">
+        <span className={`w-4 text-center font-bold text-xs ${
+          highRiskCount > 0 ? "text-red-400" : riskCount > 0 ? "text-yellow-400" : "text-green-400"
+        }`}>
+          {highRiskCount > 0 ? "✗" : riskCount > 0 ? "!" : "✓"}
+        </span>
+        <span className="text-gray-400">
+          {t.dashboard.risksCount
+            .replace("{count}", String(riskCount))
+            .replace("{plural}", riskCount !== 1 ? "s" : "")}
+        </span>
+        {highRiskCount > 0 && (
+          <span className="text-red-400 text-xs">({highRiskCount} high)</span>
         )}
       </div>
     </Card>
-  );
-}
-
-function StatusRow({ label, ok, okText, badText, detail }: { label: string; ok: boolean; okText: string; badText: string; detail?: string }) {
-  const icon = ok ? "✓" : "!";
-  const color = ok ? "text-green-400" : "text-yellow-400";
-  return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className={`${color} w-4 text-center font-bold text-xs`}>{icon}</span>
-      <span className="text-gray-400 w-28 shrink-0">{label}</span>
-      <span className={color}>{ok ? okText : badText}</span>
-      {detail && <span className="text-gray-600 text-xs truncate">{detail}</span>}
-    </div>
   );
 }

@@ -61,11 +61,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setLocale = async (next: Locale) => {
+    // Optimistic local update for instant feedback
     setLocaleState(next);
     try {
-      await window.api.config.set("language", next);
+      // Execute through the Command system — SettingsHandler persists
+      // and broadcasts via IPC. The onLanguageChange listener below
+      // will confirm the change (no-op if already set).
+      await window.api.command.execute("settings.language", { query: next });
     } catch {
-      // Best-effort persistence
+      // Best-effort — command execution failures are logged in Main
     }
   };
 

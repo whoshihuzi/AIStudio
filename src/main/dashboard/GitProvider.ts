@@ -103,4 +103,19 @@ export class GitProvider {
       return "0000000";
     }
   }
+
+  // ----------------------------------------------------------
+  // Last commit time (relative, e.g. "3 minutes ago")
+  // ----------------------------------------------------------
+
+  getLastCommitTime(): string {
+    try {
+      return execSync('git log -1 --format="%ar"', {
+        encoding: "utf-8",
+        cwd: process.cwd(),
+      }).trim();
+    } catch {
+      return "unknown";
+    }
+  }
 }

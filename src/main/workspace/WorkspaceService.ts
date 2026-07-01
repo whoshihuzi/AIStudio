@@ -7,6 +7,8 @@
 import { WorkspaceRootProvider } from "./WorkspaceRootProvider.js";
 import { PathResolver } from "./PathResolver.js";
 import { WorkspaceProvider } from "./WorkspaceProvider.js";
+import { WriteAuditTrail } from "./WriteAuditTrail.js";
+import type { IWriteAuditTrail } from "./WriteAuditTrail.js";
 import type { IWorkspaceProvider, FileContent, FileStat, DirectoryEntry, SearchResult, GlobResult } from "./types.js";
 import type { WorkspaceNode, FileNode } from "../../shared/workspace/types.js";
 
@@ -14,7 +16,11 @@ const rootProvider = new WorkspaceRootProvider();
 const pathResolver = new PathResolver(rootProvider);
 
 export class WorkspaceService implements IWorkspaceProvider {
-  private readonly provider = new WorkspaceProvider(rootProvider, pathResolver);
+  private readonly auditTrail = new WriteAuditTrail(1000);
+  private readonly provider = new WorkspaceProvider(rootProvider, pathResolver, this.auditTrail);
+
+  // Audit trail access
+  getAuditTrail(): IWriteAuditTrail { return this.auditTrail; }
 
   // Internal (Provider types — for internal use)
   readFile(path: string): FileContent { return this.provider.readFile(path); }
